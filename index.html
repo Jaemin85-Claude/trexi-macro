@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TREXI MACRO — 반도체 수출·증시 관제 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F6F8; --card:#FFFFFF; --card2:#F0F2F5; --line:#DDE2E9;
+  --tx:#1B2430; --tx2:#5A6675; --tx3:#98A2AE;
+  --exp:#128A62; --mem:#B8891E; --kospi:#2E6FC4; --spx:#6B7684;
+  --samsung:#2E6FC4; --hynix:#D13B55; --semco:#7C5FC9;
+  --nvda:#128A62; --mu:#B8891E; --amd:#C4404F; --avgo:#A855A0;
+  --tsm:#2F8F63; --msft:#3D7FC1; --meta:#4C63D2;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans KR',sans-serif;font-size:14px;line-height:1.6}
+.mono{font-family:'IBM Plex Mono',monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
+header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:26px}
+.hd-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+h1{font-size:21px;font-weight:700;letter-spacing:.04em}
+h1 span{color:var(--exp)}
+.hd-sub{color:var(--tx2);font-size:12.5px;margin-top:4px}
+.live-badge{background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:9px 14px;font-size:13px;display:flex;align-items:center;gap:9px;min-height:40px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--exp);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.live-badge b{color:var(--exp)}
+.live-badge .tag{color:var(--tx3);font-size:11px;border:1px solid var(--line);border-radius:3px;padding:1px 6px}
+.updated{color:var(--tx3);font-size:11.5px;margin-top:6px}
+.filters{display:flex;gap:8px;margin:0 0 22px;flex-wrap:wrap}
+.fbtn{background:var(--card);border:1px solid var(--line);color:var(--tx2);border-radius:5px;padding:6px 14px;font-size:12.5px;cursor:pointer;font-family:inherit}
+.fbtn.on{background:var(--card2);color:var(--tx);border-color:var(--exp)}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-bottom:22px;box-shadow:0 1px 3px rgba(27,36,48,.06)}
+.fig{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--exp);letter-spacing:.14em;margin-bottom:2px}
+h2{font-size:16px;font-weight:500;margin-bottom:2px}
+.desc{color:var(--tx2);font-size:12.5px;margin-bottom:14px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;color:var(--tx2)}
+.lg{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.lg.off{opacity:.32}
+.sw{width:14px;height:3px;border-radius:2px}
+svg{width:100%;height:auto;display:block}
+.axis{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:var(--tx3)}
+.gline{stroke:var(--line);stroke-width:.5}
+.err{color:var(--tx3);font-size:13px;padding:32px 0;text-align:center}
+.pin{cursor:pointer}
+.readout{background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:10px 14px;font-size:12.5px;color:var(--tx2);margin-top:10px;min-height:42px}
+.readout b{color:var(--tx)}
+.ev-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.ev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.ev-card{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--tx3);border-radius:6px;padding:11px 13px}
+.ev-num{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--tx3)}
+.ev-date{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx2)}
+.ev-label{font-size:13.5px;font-weight:500;margin:3px 0 2px}
+.ev-desc{font-size:12px;color:var(--tx2)}
+footer{color:var(--tx3);font-size:11.5px;line-height:1.8;margin-top:8px}
+@media(max-width:640px){.wrap{padding:18px 12px 40px}section{padding:15px 14px}h1{font-size:18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="hd-top">
+    <div>
+      <h1>TREXI <span>MACRO</span> 관제 대시보드</h1>
+      <div class="hd-sub">반도체 수출(관세청) × 한·미 증시 — 월 단위 실측 데이터 자동 연동</div>
+    </div>
+    <div class="live-badge" id="liveBadge"><span class="dot"></span><span id="liveText">수출 속보 불러오는 중…</span></div>
+  </div>
+  <div class="updated mono" id="updatedText">데이터 로딩 중</div>
+</header>
+
+<div class="filters" id="rangeFilters">
+  <button class="fbtn on" data-r="all">전체</button>
+  <button class="fbtn" data-r="ytd">YTD</button>
+  <button class="fbtn" data-r="6m">6M</button>
+  <button class="fbtn" data-r="3m">3M</button>
+</div>
+
+<section>
+  <div class="fig">FIG. 01</div>
+  <h2>KOSPI vs S&amp;P 500 — 정규화 지수 (2025.01 = 100)</h2>
+  <div class="desc">동일 시점 100 기준 상대 성과. 상단 핀 = 매크로 이벤트 (클릭 시 하단 표시)</div>
+  <div class="legend" id="lg1"></div>
+  <div id="fig1"></div>
+  <div class="readout" id="ro1">이벤트 핀을 클릭하면 상세가 표시됩니다.</div>
+</section>
+
+<section>
+  <div class="fig">FIG. 02</div>
+  <h2>반도체·빅테크 종목 — 정규화 멀티라인 (2025.01 = 100)</h2>
+  <div class="desc">범례 클릭으로 종목 표시/숨김. 로그 대신 정규화 배율로 비교</div>
+  <div class="legend" id="lg2"></div>
+  <div id="fig2"></div>
+  <div class="readout" id="ro2">이벤트 핀을 클릭하면 상세가 표시됩니다.</div>
+</section>
+
+<section>
+  <div class="fig">FIG. 03</div>
+  <h2>반도체 수출 vs 주가 — 업황 선행지표 크로스</h2>
+  <div class="desc">막대 = 월별 반도체 수출(억$, 관세청 발표 기준) · 골드 라인 = 메모리(HS854232) · 우측 라인 = 삼성전자·SK하이닉스 정규화 주가</div>
+  <div class="legend" id="lg3"></div>
+  <div id="fig3"></div>
+</section>
+
+<section>
+  <div class="fig">FIG. 04</div>
+  <h2>매크로 이벤트 타임라인</h2>
+  <div class="ev-filters" id="evFilters"></div>
+  <div class="ev-grid" id="evGrid"></div>
+</section>
+
+<footer>
+  데이터: 관세청 수출입통계(10일 단위·품목별) · Yahoo Finance 월별 종가 · 6시간 캐시 자동 갱신<br>
+  본 자료는 시장 회고용 정보 시각화이며 투자 권유가 아닙니다. Trexi Co., Ltd. 내부 분석용.<br>
+  <span class="mono">Built by Trexi · Powered by Claude</span>
+</footer>
+
+</div>
+
+<script>
+// ================== 설정 ==================
+const API = 'https://script.google.com/macros/s/AKfycbwpnp_BrcFQaWazju8fGAS6wC82RXZpWWfTy9uzYbqXmJfCiNP4cVg9MLNQ646uuaa3/exec?key=trexi2026&type=all';
+
+// 수출 폴백 (2026-07-16 관세청 실측 검증분 — API 실패 시에만 사용)
+const EXPORT_FALLBACK = {"updated":"2026-07-16 (내장 폴백)","semiconMonthly":[{"ym":"2025-01","eok":102.2,"totalEok":491.8},{"ym":"2025-02","eok":98,"totalEok":522.9},{"ym":"2025-03","eok":132,"totalEok":580.6},{"ym":"2025-04","eok":118,"totalEok":580.4},{"ym":"2025-05","eok":139.3,"totalEok":572.6},{"ym":"2025-06","eok":151.4,"totalEok":598.3},{"ym":"2025-07","eok":149,"totalEok":607.2},{"ym":"2025-08","eok":153,"totalEok":582.6},{"ym":"2025-09","eok":167.9,"totalEok":659},{"ym":"2025-10","eok":158.6,"totalEok":595.1},{"ym":"2025-11","eok":174.4,"totalEok":607.5},{"ym":"2025-12","eok":209.2,"totalEok":695.1},{"ym":"2026-01","eok":206.9,"totalEok":658.5},{"ym":"2026-02","eok":252.5,"totalEok":676.5},{"ym":"2026-03","eok":329.7,"totalEok":873.4},{"ym":"2026-04","eok":320.4,"totalEok":857.4},{"ym":"2026-05","eok":372.9,"totalEok":876.1},{"ym":"2026-06","eok":449.5,"totalEok":1021.7}],"memoryMonthly":[{"ym":"2025-01","eok":47.7},{"ym":"2025-02","eok":47.3},{"ym":"2025-03","eok":66.9},{"ym":"2025-04","eok":57.6},{"ym":"2025-05","eok":73.4},{"ym":"2025-06","eok":82.3},{"ym":"2025-07","eok":75.6},{"ym":"2025-08","eok":85},{"ym":"2025-09","eok":93.5},{"ym":"2025-10","eok":88.9},{"ym":"2025-11","eok":101.6},{"ym":"2025-12","eok":126.4},{"ym":"2026-01","eok":121.1},{"ym":"2026-02","eok":158.1},{"ym":"2026-03","eok":207.6},{"ym":"2026-04","eok":208.3},{"ym":"2026-05","eok":249.5},{"ym":"2026-06","eok":290.4}],"latest":{"period":"7/1~10","semiEok":112.1,"yoy":193,"tag":"잠정"}};
+
+// 매크로 이벤트 (원본 12개 복원)
+const CATS = { tech:{label:'기술/사이클',c:'#B8891E'}, trade:{label:'무역/관세',c:'#C08415'},
+  money:{label:'통화/신용',c:'#3D7FC1'}, policy:{label:'정책/수급',c:'#2F8F63'}, geo:{label:'지정학',c:'#C4404F'} };
+const EVENTS = [
+  {date:'2025-01-27',num:'01',cat:'tech',c:'#7C5FC9',label:'DeepSeek 충격',desc:'AI 인프라 투자 회의론 확산, 빅테크 일제히 급락'},
+  {date:'2025-04-02',num:'02',cat:'trade',c:'#C08415',label:'해방의 날 관세',desc:'한국 25%·일본 24%·EU 20% 상호관세 발표'},
+  {date:'2025-04-09',num:'03',cat:'trade',c:'#C08415',label:'90일 관세 유예',desc:'S&P +9.52%, NASDAQ +12.16% 폭등'},
+  {date:'2025-05-16',num:'04',cat:'money',c:'#3D7FC1',label:'美 신용등급 강등',desc:'무디스 Aaa→Aa1, 3대 신평사 모두 최고등급 상실'},
+  {date:'2025-06-05',num:'05',cat:'policy',c:'#2F8F63',label:'이재명 정부 출범',desc:'자본시장 정책 패키지, 외국인 컴백'},
+  {date:'2025-06-13',num:'06',cat:'geo',c:'#C4404F',label:'이스라엘·이란 충돌',desc:'핵시설 공습, 브렌트유 +13%'},
+  {date:'2025-09-17',num:'07',cat:'money',c:'#3D7FC1',label:'Fed 금리 인하 재개',desc:'9·12월 누적 -50bp, QT 종료'},
+  {date:'2025-11-03',num:'08',cat:'tech',c:'#B8891E',label:'KOSPI 사상최고 4,222',desc:'반도체 슈퍼사이클, 외국인 매수'},
+  {date:'2025-11-25',num:'09',cat:'policy',c:'#2F8F63',label:'외국인 14조 순매도',desc:'리밸런싱·차익실현, 단기 -8% 조정'},
+  {date:'2026-01-22',num:'10',cat:'tech',c:'#B8891E',label:'KOSPI 5,000 돌파',desc:'2025년 연간 +71% 후 추가 상승'},
+  {date:'2026-02-28',num:'11',cat:'geo',c:'#C4404F',label:'美·이스라엘 이란공습',desc:'하메네이 사망, WTI +6.94%'},
+  {date:'2026-05-06',num:'12',cat:'tech',c:'#B8891E',label:'KOSPI 7,400 장중',desc:'메모리 사이클 정점, 18M +208%'}
+];
+const STOCK_COLORS = {'삼성전자':'var(--samsung)','SK하이닉스':'var(--hynix)','삼성전기':'var(--semco)',
+  'NVIDIA':'var(--nvda)','Micron':'var(--mu)','AMD':'var(--amd)','Broadcom':'var(--avgo)',
+  'TSMC':'var(--tsm)','Microsoft':'var(--msft)','Meta':'var(--meta)'};
+const DEFAULT_ON = ['삼성전자','SK하이닉스','NVIDIA','Micron'];
+
+// ================== 상태 ==================
+let DATA = { export: null, stocks: null };
+let RANGE = 'all';
+let stockOn = {};
+let evCat = 'all';
+
+// ================== 유틸 ==================
+const $ = id => document.getElementById(id);
+function months(list){ return list.map(x=>x.ym); }
+function rangeFilter(yms){
+  if(RANGE==='all') return yms;
+  const last = yms[yms.length-1];
+  if(RANGE==='ytd') return yms.filter(m=>m.slice(0,4)===last.slice(0,4));
+  const n = RANGE==='6m'?6:3;
+  return yms.slice(-n);
+}
+function normalize(series){
+  if(!series||!series.length) return [];
+  const base = series[0].v;
+  return series.map(p=>({ym:p.ym, v: base>0 ? p.v/base*100 : 0}));
+}
+function fmt(n,d=1){ return Number(n).toLocaleString('ko-KR',{maximumFractionDigits:d,minimumFractionDigits:0}); }
+
+// ================== SVG 라인차트 ==================
+function drawLineChart(elId, seriesList, yms, opts={}){
+  const el = $(elId);
+  if(!seriesList.length || !yms.length){ el.innerHTML = '<div class="err">'+(opts.errMsg||'데이터 연결 실패 — 새로고침 시 재시도합니다')+'</div>'; return; }
+  const W=980, H=opts.h||360, L=54, R=opts.rAxis?60:16, T=40, B=34;
+  let mn=Infinity, mx=-Infinity;
+  seriesList.forEach(s=>s.data.forEach(p=>{ if(p.v<mn)mn=p.v; if(p.v>mx)mx=p.v; }));
+  if(opts.bars) opts.bars.data.forEach(p=>{ if(p.v<mn)mn=p.v; if(p.v>mx)mx=p.v; }); // 막대도 좌축 스케일에 포함
+  if(mn===Infinity){ mn=0; mx=1; }
+  if(mn>0) mn=Math.min(mn,0)===0?0:mn; // 막대 기준선 확보용: 양수 데이터면 0부터
+  if(opts.bars) mn=0;
+  const pad=(mx-mn)*0.08||1; mn-=pad; mx+=pad;
+  const x = i => L + (yms.length===1?0:(W-L-R)*i/(yms.length-1));
+  const y = v => T + (H-T-B)*(1-(v-mn)/(mx-mn));
+  let g = `<svg viewBox="0 0 ${W} ${H}">`;
+  // 그리드 + Y축
+  for(let k=0;k<=4;k++){
+    const vv = mn + (mx-mn)*k/4, yy = y(vv);
+    g += `<line class="gline" x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}"/>`;
+    g += `<text class="axis" x="${L-6}" y="${yy+3}" text-anchor="end">${fmt(vv,0)}</text>`;
+  }
+  // X축 라벨 (최대 9개)
+  const step = Math.max(1, Math.ceil(yms.length/9));
+  yms.forEach((m,i)=>{ if(i%step===0||i===yms.length-1)
+    g += `<text class="axis" x="${x(i)}" y="${H-10}" text-anchor="middle">${m.slice(2).replace('-','.')}</text>`; });
+  // 우축 시리즈 (별도 스케일)
+  if(opts.rSeries && opts.rSeries.length){
+    let rmn=Infinity, rmx=-Infinity;
+    opts.rSeries.forEach(s=>s.data.forEach(p=>{ if(p.v<rmn)rmn=p.v; if(p.v>rmx)rmx=p.v; }));
+    const rp=(rmx-rmn)*0.08||1; rmn-=rp; rmx+=rp;
+    const ry = v => T + (H-T-B)*(1-(v-rmn)/(rmx-rmn));
+    for(let k=0;k<=4;k++){
+      const vv=rmn+(rmx-rmn)*k/4;
+      g += `<text class="axis" x="${W-R+6}" y="${ry(vv)+3}">${fmt(vv,0)}</text>`;
+    }
+    opts.rSeries.forEach(s=>{
+      const pts = s.data.map((p,i)=>`${x(yms.indexOf(p.ym))},${ry(p.v)}`).join(' ');
+      g += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2" stroke-dasharray="${s.dash||''}" opacity="${s.op||1}"/>`;
+    });
+  }
+  // 막대 시리즈
+  if(opts.bars){
+    const bw = Math.max(4,(W-L-R)/yms.length*0.5);
+    opts.bars.data.forEach(p=>{
+      const xi = yms.indexOf(p.ym); if(xi<0) return;
+      g += `<rect x="${x(xi)-bw/2}" y="${y(p.v)}" width="${bw}" height="${H-B-y(p.v)}" fill="${opts.bars.color}" opacity=".55" rx="2"/>`;
+    });
+  }
+  // 라인 시리즈
+  seriesList.forEach(s=>{
+    if(s.type==='bar' || !s.data.length) return;
+    const pts = s.data.map(p=>{ const xi=yms.indexOf(p.ym); return xi<0?null:`${x(xi)},${y(p.v)}`; }).filter(Boolean).join(' ');
+    if(!pts) return;
+    g += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2.2" stroke-dasharray="${s.dash||''}"/>`;
+    const lastP = s.data[s.data.length-1], lxi = yms.indexOf(lastP.ym);
+    if(lxi>=0) g += `<circle cx="${x(lxi)}" cy="${y(lastP.v)}" r="3.4" fill="${s.color}"/>`;
+  });
+  // 이벤트 핀
+  if(opts.pins){
+    EVENTS.forEach(ev=>{
+      const evYm = ev.date.slice(0,7);
+      const xi = yms.indexOf(evYm); if(xi<0) return;
+      const px = x(xi);
+      g += `<line x1="${px}" y1="${T-4}" x2="${px}" y2="${H-B}" stroke="${ev.c}" stroke-width=".7" opacity=".35"/>`;
+      g += `<g class="pin" onclick="showEvent('${opts.pins}','${ev.num}')">`+
+           `<circle cx="${px}" cy="${T-16}" r="9" fill="${ev.c}" opacity=".92"/>`+
+           `<text x="${px}" y="${T-12.6}" text-anchor="middle" font-size="8.5" font-family="IBM Plex Mono" fill="#FFFFFF" font-weight="600">${ev.num}</text></g>`;
+    });
+  }
+  g += '</svg>';
+  el.innerHTML = g;
+}
+
+function showEvent(roId, num){
+  const ev = EVENTS.find(e=>e.num===num);
+  $(roId).innerHTML = `<span class="mono" style="color:${ev.c}">[${ev.num}] ${ev.date}</span> · <b>${ev.label}</b> — ${ev.desc} <span style="color:var(--tx3)">(${CATS[ev.cat].label})</span>`;
+}
+
+// ================== 렌더 ==================
+function seriesFrom(list, key){ return (list||[]).map(x=>({ym:x.ym, v:x[key]})); }
+
+function renderAll(){
+  // FIG.01 지수
+  const idx = DATA.stocks && DATA.stocks.indices;
+  if(idx && idx.KOSPI && idx.SPX){
+    const yms = rangeFilter(months(idx.KOSPI));
+    const cut = s => s.filter(p=>yms.includes(p.ym));
+    const k = normalize(cut(seriesFrom(idx.KOSPI,'close')));
+    const s = normalize(cut(seriesFrom(idx.SPX,'close')));
+    $('lg1').innerHTML = `<span class="lg"><span class="sw" style="background:var(--kospi)"></span>KOSPI</span>
+      <span class="lg"><span class="sw" style="background:var(--spx)"></span>S&amp;P 500</span>`;
+    drawLineChart('fig1',[{data:k,color:'var(--kospi)'},{data:s,color:'var(--spx)',dash:'5 4'}],yms,{pins:'ro1'});
+  } else drawLineChart('fig1',[],[],{errMsg:'지수 데이터 연결 실패 — Apps Script 웹앱 상태를 확인하세요'});
+
+  // FIG.02 종목
+  const st = DATA.stocks && DATA.stocks.stocks;
+  if(st && Object.keys(st).length){
+    const names = Object.keys(st);
+    $('lg2').innerHTML = names.map(n=>
+      `<span class="lg ${stockOn[n]?'':'off'}" onclick="toggleStock('${n}')"><span class="sw" style="background:${STOCK_COLORS[n]||'var(--tx2)'}"></span>${n}</span>`).join('');
+    const active = names.filter(n=>stockOn[n]);
+    if(active.length){
+      const yms = rangeFilter(months(st[active[0]]));
+      const cut = s => s.filter(p=>yms.includes(p.ym));
+      const series = active.map(n=>({data: normalize(cut(seriesFrom(st[n],'close'))), color: STOCK_COLORS[n]||'var(--tx2)'}));
+      drawLineChart('fig2',series,yms,{pins:'ro2'});
+    } else $('fig2').innerHTML='<div class="err">범례에서 종목을 선택하세요</div>';
+  } else drawLineChart('fig2',[],[],{errMsg:'종목 데이터 연결 실패 — Apps Script 웹앱 상태를 확인하세요'});
+
+  // FIG.03 수출 vs 주가
+  const ex = DATA.export;
+  if(ex && ex.semiconMonthly && ex.semiconMonthly.length){
+    const yms = rangeFilter(ex.semiconMonthly.map(x=>x.ym));
+    const semi = ex.semiconMonthly.filter(x=>yms.includes(x.ym)).map(x=>({ym:x.ym,v:x.eok}));
+    const mem = (ex.memoryMonthly||[]).filter(x=>yms.includes(x.ym)).map(x=>({ym:x.ym,v:x.eok}));
+    let rSeries = [];
+    let lgExtra = '';
+    if(st && st['삼성전자'] && st['SK하이닉스']){
+      const cut = s => s.filter(p=>yms.includes(p.ym));
+      rSeries = [
+        {data: normalize(cut(seriesFrom(st['삼성전자'],'close'))), color:'var(--samsung)', dash:'5 4', op:.85},
+        {data: normalize(cut(seriesFrom(st['SK하이닉스'],'close'))), color:'var(--hynix)', dash:'5 4', op:.85},
+      ];
+      lgExtra = `<span class="lg"><span class="sw" style="background:var(--samsung)"></span>삼성전자(우, 정규화)</span>
+        <span class="lg"><span class="sw" style="background:var(--hynix)"></span>SK하이닉스(우, 정규화)</span>`;
+    }
+    $('lg3').innerHTML = `<span class="lg"><span class="sw" style="background:var(--exp)"></span>반도체 수출(좌, 억$)</span>
+      <span class="lg"><span class="sw" style="background:var(--mem)"></span>메모리 HS854232(좌, 억$)</span>` + lgExtra;
+    drawLineChart('fig3',[{data:mem,color:'var(--mem)'}],yms,
+      {bars:{data:semi,color:'var(--exp)'}, rSeries, rAxis: rSeries.length>0, h:380});
+  } else drawLineChart('fig3',[],[],{errMsg:'수출 데이터 연결 실패'});
+
+  renderEvents();
+}
+
+function renderEvents(){
+  $('evFilters').innerHTML = `<button class="fbtn ${evCat==='all'?'on':''}" onclick="setEvCat('all')">전체</button>` +
+    Object.keys(CATS).map(c=>`<button class="fbtn ${evCat===c?'on':''}" onclick="setEvCat('${c}')">${CATS[c].label}</button>`).join('');
+  $('evGrid').innerHTML = EVENTS.filter(e=>evCat==='all'||e.cat===evCat).map(e=>
+    `<div class="ev-card" style="border-left-color:${e.c}">
+      <div style="display:flex;justify-content:space-between"><span class="ev-num">EVT.${e.num}</span><span class="ev-date">${e.date}</span></div>
+      <div class="ev-label">${e.label}</div><div class="ev-desc">${e.desc}</div>
+    </div>`).join('');
+}
+
+function toggleStock(n){ stockOn[n]=!stockOn[n]; renderAll(); }
+function setEvCat(c){ evCat=c; renderEvents(); }
+
+document.querySelectorAll('#rangeFilters .fbtn').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#rangeFilters .fbtn').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); RANGE=b.dataset.r; renderAll();
+});
+
+// ================== 데이터 로드 ==================
+function applyLatestBadge(){
+  const l = DATA.export && DATA.export.latest;
+  if(l){
+    $('liveText').innerHTML = `수출 속보 ${l.period} 반도체 <b>$${fmt(l.semiEok)}억</b> ${l.yoy!=null?('<b>'+(l.yoy>=0?'+':'')+fmt(l.yoy)+'%</b> YoY'):''} <span class="tag">${l.tag}</span>`;
+  } else $('liveText').textContent = '수출 속보 없음';
+  $('updatedText').textContent = 'DATA AS OF ' + ((DATA.export&&DATA.export.updated)||'-') +
+    (DATA.stocks&&DATA.stocks.updated ? ' · STOCKS ' + DATA.stocks.updated : ' · 주가 연결 실패');
+}
+
+(async function init(){
+  // 종목 기본 표시 설정
+  Object.keys(STOCK_COLORS).forEach(n=>stockOn[n]=DEFAULT_ON.includes(n));
+  try{
+    const r = await fetch(API);
+    const j = await r.json();
+    DATA.export = j.export && j.export.semiconMonthly && j.export.semiconMonthly.length ? j.export : EXPORT_FALLBACK;
+    DATA.stocks = j.stocks || null;
+  }catch(e){
+    DATA.export = EXPORT_FALLBACK;
+    DATA.stocks = null;
+  }
+  applyLatestBadge();
+  renderAll();
+})();
+</script>
+</body>
+</html>
