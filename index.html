@@ -61,6 +61,11 @@ svg{width:100%;height:auto;display:block}
 .ev-date{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:var(--tx2)}
 .ev-label{font-size:14px;font-weight:700;margin:3px 0 2px}
 .ev-desc{font-size:12px;color:var(--tx2)}
+.news-item{display:block;background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:11px 14px;margin-bottom:9px;text-decoration:none;color:var(--tx)}
+.news-item:hover{box-shadow:0 2px 8px rgba(27,36,48,.12)}
+.news-meta{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:var(--tx3);display:flex;gap:8px;margin-bottom:3px}
+.news-meta .rg{border:1px solid var(--line);border-radius:3px;padding:0 5px}
+.news-title{font-size:13.5px;font-weight:600;line-height:1.45}
 .snap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
 .snap{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
 .snap .nm{font-size:12.5px;font-weight:600;color:var(--tx2)}
@@ -128,9 +133,20 @@ footer{color:var(--tx3);font-size:11.5px;line-height:1.8;margin-top:8px}
 
 <section>
   <div class="fig">FIG. 04</div>
-  <h2>매크로 이벤트 타임라인 <span style="font-size:12px;color:var(--tx3);font-weight:400">— 최신순 · 클릭 시 FIG.01~03 연동 강조</span></h2>
-  <div class="ev-filters" id="evFilters"></div>
-  <div class="ev-grid" id="evGrid"></div>
+  <h2 id="t4">매크로 이벤트 · 실시간 뉴스</h2>
+  <div class="filters" style="margin:8px 0 12px">
+    <button class="fbtn on" id="tabEvt" onclick="setTab('evt')">📌 변곡점 이벤트</button>
+    <button class="fbtn" id="tabNews" onclick="setTab('news')">🔥 실시간 뉴스</button>
+  </div>
+  <div id="paneEvt">
+    <div class="desc">최신순 · 클릭 시 FIG.01~03 연동 강조</div>
+    <div class="ev-filters" id="evFilters"></div>
+    <div class="ev-grid" id="evGrid"></div>
+  </div>
+  <div id="paneNews" style="display:none">
+    <div class="desc">국내·해외 버즈 상위 중 주식 관련만 자동 필터 · 1시간 주기 갱신 · 탭하면 원문</div>
+    <div id="newsList"><div class="err">뉴스 불러오는 중…</div></div>
+  </div>
 </section>
 
 <footer>
@@ -142,6 +158,7 @@ footer{color:var(--tx3);font-size:11.5px;line-height:1.8;margin-top:8px}
 </div>
 
 <script>
+const API_NEWS_TYPE = 'news';
 const API = 'https://script.google.com/macros/s/AKfycbwpnp_BrcFQaWazju8fGAS6wC82RXZpWWfTy9uzYbqXmJfCiNP4cVg9MLNQ646uuaa3/exec?key=trexi2026&type=all';
 
 const EXPORT_FALLBACK = {"updated":"2026-07-16 (내장 폴백)","semiconMonthly":[{"ym":"2025-01","eok":102.2,"totalEok":491.8},{"ym":"2025-02","eok":98,"totalEok":522.9},{"ym":"2025-03","eok":132,"totalEok":580.6},{"ym":"2025-04","eok":118,"totalEok":580.4},{"ym":"2025-05","eok":139.3,"totalEok":572.6},{"ym":"2025-06","eok":151.4,"totalEok":598.3},{"ym":"2025-07","eok":149,"totalEok":607.2},{"ym":"2025-08","eok":153,"totalEok":582.6},{"ym":"2025-09","eok":167.9,"totalEok":659},{"ym":"2025-10","eok":158.6,"totalEok":595.1},{"ym":"2025-11","eok":174.4,"totalEok":607.5},{"ym":"2025-12","eok":209.2,"totalEok":695.1},{"ym":"2026-01","eok":206.9,"totalEok":658.5},{"ym":"2026-02","eok":252.5,"totalEok":676.5},{"ym":"2026-03","eok":329.7,"totalEok":873.4},{"ym":"2026-04","eok":320.4,"totalEok":857.4},{"ym":"2026-05","eok":372.9,"totalEok":876.1},{"ym":"2026-06","eok":449.5,"totalEok":1021.7}],"memoryMonthly":[{"ym":"2025-01","eok":47.7},{"ym":"2025-02","eok":47.3},{"ym":"2025-03","eok":66.9},{"ym":"2025-04","eok":57.6},{"ym":"2025-05","eok":73.4},{"ym":"2025-06","eok":82.3},{"ym":"2025-07","eok":75.6},{"ym":"2025-08","eok":85},{"ym":"2025-09","eok":93.5},{"ym":"2025-10","eok":88.9},{"ym":"2025-11","eok":101.6},{"ym":"2025-12","eok":126.4},{"ym":"2026-01","eok":121.1},{"ym":"2026-02","eok":158.1},{"ym":"2026-03","eok":207.6},{"ym":"2026-04","eok":208.3},{"ym":"2026-05","eok":249.5},{"ym":"2026-06","eok":290.4}],"latest":{"period":"7/1~10","semiEok":112.1,"yoy":193,"tag":"잠정"}};
@@ -411,6 +428,34 @@ function renderEvents(){
     </div>`).join('');
 }
 
+let NEWS = null, TAB = 'evt';
+function setTab(t){
+  TAB = t;
+  document.getElementById('tabEvt').classList.toggle('on', t==='evt');
+  document.getElementById('tabNews').classList.toggle('on', t==='news');
+  document.getElementById('paneEvt').style.display = t==='evt' ? '' : 'none';
+  document.getElementById('paneNews').style.display = t==='news' ? '' : 'none';
+  if(t==='news' && !NEWS) loadNews();
+}
+async function loadNews(){
+  try{
+    const r = await fetch(API.replace('type=all','type=news'));
+    NEWS = await r.json();
+    renderNews();
+  }catch(e){
+    document.getElementById('newsList').innerHTML = '<div class="err">뉴스 연결 실패 — 새로고침 시 재시도</div>';
+  }
+}
+function renderNews(){
+  if(!NEWS || !NEWS.items || !NEWS.items.length){
+    document.getElementById('newsList').innerHTML = '<div class="err">표시할 뉴스 없음</div>'; return;
+  }
+  document.getElementById('newsList').innerHTML = NEWS.items.map(n =>
+    `<a class="news-item" href="${n.link}" target="_blank" rel="noopener">
+      <div class="news-meta"><span class="rg">${n.region==='KR'?'국내':'해외'}</span><span>${n.time}</span><span>${n.source}</span></div>
+      <div class="news-title">${n.title}</div></a>`).join('') +
+    '<div class="zoomhint">필터: 종목·반도체·시장·거시·환율무역·지정학·실적·美정치·中테크 9개 카테고리 · ' + NEWS.updated + ' 수집</div>';
+}
 function toggleStock(n){ stockOn[n]=!stockOn[n]; renderAll(); }
 function setEvCat(c){ evCat=c; renderEvents(); }
 
