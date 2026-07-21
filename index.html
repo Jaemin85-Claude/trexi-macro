@@ -10,10 +10,10 @@
 :root{
   --bg:#F5F6F8; --card:#FFFFFF; --card2:#F0F2F5; --line:#DDE2E9;
   --tx:#1B2430; --tx2:#4A5561; --tx3:#8B96A2;
-  --exp:#0E7A55; --mem:#A87A12; --kospi:#1F5FB8; --spx:#5A6570;
+  --exp:#0E7A55; --mem:#A87A12; --kospi:#1F5FB8; --spx:#5A6570; --nasdaq:#7A3FB5;
   --samsung:#1F5FB8; --hynix:#C52A46; --semco:#6B4DC0;
   --nvda:#0E7A55; --mu:#A87A12; --amd:#B5303F; --avgo:#994D91;
-  --tsm:#1F7E54; --msft:#2E6FB5; --meta:#3B52C4; --goog:#0E7A87;
+  --tsm:#1F7E54; --msft:#2E6FB5; --meta:#3B52C4; --goog:#0E7A87; --intc:#2764AE; --sndk:#8A5A2E;
   --hl:#FFB300;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -144,7 +144,9 @@ footer{color:var(--tx3);font-size:11.5px;line-height:1.8;margin-top:8px}
     <div class="ev-grid" id="evGrid"></div>
   </div>
   <div id="paneNews" style="display:none">
-    <div class="desc">국내·해외 버즈 상위 중 주식 관련만 자동 필터 · 1시간 주기 갱신 · 탭하면 원문</div>
+    <div class="desc" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <span>국내·해외 버즈 상위 중 주식 관련만 자동 필터 · 탭하면 원문</span>
+      <button class="fbtn" onclick="loadNews(true)">🔄 지금 업데이트</button></div>
     <div id="newsList"><div class="err">뉴스 불러오는 중…</div></div>
   </div>
 </section>
@@ -177,11 +179,13 @@ const EVENTS = [
   {date:'2025-11-25',num:'09',cat:'policy',c:'#1F7E54',label:'외국인 14조 순매도',desc:'리밸런싱·차익실현, 단기 -8% 조정'},
   {date:'2026-01-22',num:'10',cat:'tech',c:'#A87A12',label:'KOSPI 5,000 돌파',desc:'2025년 연간 +71% 후 추가 상승'},
   {date:'2026-02-28',num:'11',cat:'geo',c:'#B5303F',label:'美·이스라엘 이란공습',desc:'하메네이 사망, WTI +6.94%'},
-  {date:'2026-05-06',num:'12',cat:'tech',c:'#A87A12',label:'KOSPI 7,400 장중',desc:'메모리 사이클 정점, 18M +208%'}
+  {date:'2026-05-06',num:'12',cat:'tech',c:'#A87A12',label:'KOSPI 7,400 장중',desc:'메모리 사이클 정점, 18M +208%'},
+  {date:'2026-07-16',num:'13',cat:'tech',c:'#A87A12',label:'코스피 -6.4% 급락',desc:'고점 대비 조정 본격화, 레버리지 경계 확산'},
+  {date:'2026-07-20',num:'14',cat:'tech',c:'#A87A12',label:'코스피 6,500선 (-4.5%)',desc:'글로벌 반도체 급락 여파, 기술적 약세장 진입 평가'}
 ];
 const STOCK_COLORS = {'삼성전자':'var(--samsung)','SK하이닉스':'var(--hynix)','삼성전기':'var(--semco)',
   'NVIDIA':'var(--nvda)','Micron':'var(--mu)','AMD':'var(--amd)','Broadcom':'var(--avgo)',
-  'TSMC':'var(--tsm)','Microsoft':'var(--msft)','Alphabet':'var(--goog)','Meta':'var(--meta)'};
+  'TSMC':'var(--tsm)','Microsoft':'var(--msft)','Alphabet':'var(--goog)','Intel':'var(--intc)','SanDisk':'var(--sndk)','Meta':'var(--meta)'};
 const DEFAULT_ON = ['삼성전자','SK하이닉스','NVIDIA','Micron'];
 
 let DATA = { export: null, stocks: null };
@@ -189,13 +193,13 @@ let RANGE = 'all';
 let stockOn = {};
 let evCat = 'all';
 let selEvt = null;              // 선택된 이벤트 num
-let ZOOM = { s: 0, e: 1 };      // 전 차트 공유 줌 윈도우 (분율)
+let ZOOM = { fig1:{s:0,e:1}, fig2:{s:0,e:1}, fig3:{s:0,e:1} }; // 차트별 독립 줌
 
 const $ = id => document.getElementById(id);
 const isDaily = () => RANGE === '1m' || RANGE === '1w';
 
 // ---------- 키 필터 (월봉 ym / 일봉 d 공용) ----------
-function rangeKeys(keys){
+function rangeKeys(keys, figId){
   if(!keys.length) return keys;
   const last = keys[keys.length-1];
   let base;
@@ -206,9 +210,10 @@ function rangeKeys(keys){
   else if(RANGE==='1m'){ const cut = shiftDate(last,-30); base = keys.filter(k=>k>=cut); }
   else if(RANGE==='1w'){ const cut = shiftDate(last,-7); base = keys.filter(k=>k>=cut); }
   else base = keys;
-  // 줌 윈도우 적용
-  if(base.length>2 && (ZOOM.s>0 || ZOOM.e<1)){
-    const a = Math.floor(base.length*ZOOM.s), b = Math.max(a+2, Math.ceil(base.length*ZOOM.e));
+  // 줌 윈도우 적용 (차트별 독립)
+  const z = (figId && ZOOM[figId]) || {s:0,e:1};
+  if(base.length>2 && (z.s>0 || z.e<1)){
+    const a = Math.floor(base.length*z.s), b = Math.max(a+2, Math.ceil(base.length*z.e));
     base = base.slice(a, b);
   }
   return base;
@@ -318,6 +323,16 @@ function pickEvent(num){
   }
 
 // ---------- 렌더 ----------
+function lgVal(series, dec){
+  if(!series || series.length<1) return '';
+  const first = series[0].v, last = series[series.length-1].v;
+  const chg = first>0 ? (last/first-1)*100 : 0;
+  return ' <span style="font-weight:700">' + fmt(last, dec) + '</span> <span style="color:' +
+    (chg>=0?'#C52A46':'#1F5FB8') + '">(' + (chg>=0?'+':'') + chg.toFixed(1) + '%)</span>';
+}
+function baseTag(keys){
+  return keys.length ? '<span style="border:1px solid var(--line);border-radius:3px;padding:1px 7px;font-size:11px;color:var(--tx3)">기준 ' + keyLabel(keys[0]) + ' = 100 · 등락률은 구간 기준</span>' : '';
+}
 function sf(list, key, kname){ return (list||[]).map(x=>({k:x[kname], v:x[key]})); }
 
 function renderAll(){
@@ -331,25 +346,32 @@ function renderAll(){
   const idxSrc = DATA.stocks && (dm ? DATA.stocks.dailyIndices : DATA.stocks.indices);
   const kname = dm ? 'd' : 'ym';
   if(idxSrc && idxSrc.KOSPI && idxSrc.SPX){
-    const keys = rangeKeys(idxSrc.KOSPI.map(x=>x[kname]));
+    const keys = rangeKeys(idxSrc.KOSPI.map(x=>x[kname]), 'fig1');
     const cut = s => s.filter(p=>keys.includes(p.k));
-    $('lg1').innerHTML = `<span class="lg"><span class="sw" style="background:var(--kospi)"></span>KOSPI</span>
-      <span class="lg"><span class="sw" style="background:var(--spx)"></span>S&P 500</span>`;
-    drawLineChart('fig1',
-      [{data:normalize(cut(sf(idxSrc.KOSPI,'close',kname))),color:'var(--kospi)'},
-       {data:normalize(cut(sf(idxSrc.SPX,'close',kname))),color:'var(--spx)',dash:'6 5'}],
-      keys,{pins:true});
+    const kS = cut(sf(idxSrc.KOSPI,'close',kname)), sS = cut(sf(idxSrc.SPX,'close',kname));
+    const nS = idxSrc.NASDAQ ? cut(sf(idxSrc.NASDAQ,'close',kname)) : [];
+    $('lg1').innerHTML = baseTag(keys) +
+      ` <span class="lg"><span class="sw" style="background:var(--kospi)"></span>KOSPI${lgVal(kS,2)}</span>
+      <span class="lg"><span class="sw" style="background:var(--spx)"></span>S&P 500${lgVal(sS,2)}</span>` +
+      (nS.length ? `<span class="lg"><span class="sw" style="background:var(--nasdaq)"></span>NASDAQ${lgVal(nS,2)}</span>` : '');
+    const series = [{data:normalize(kS),color:'var(--kospi)'},{data:normalize(sS),color:'var(--spx)',dash:'6 5'}];
+    if(nS.length) series.push({data:normalize(nS),color:'var(--nasdaq)',dash:'2 4'});
+    drawLineChart('fig1', series, keys,{pins:true});
   } else drawLineChart('fig1',[],[],{errMsg:'지수 데이터 연결 실패 — Apps Script 웹앱 상태를 확인하세요'});
 
   // FIG.02
   const stSrc = DATA.stocks && (dm ? DATA.stocks.dailyStocks : DATA.stocks.stocks);
   if(stSrc && Object.keys(stSrc).length){
     const names = Object.keys(stSrc);
-    $('lg2').innerHTML = names.map(n=>
-      `<span class="lg ${stockOn[n]?'':'off'}" onclick="toggleStock('${n}')"><span class="sw" style="background:${STOCK_COLORS[n]||'var(--tx2)'}"></span>${n}</span>`).join('');
     const act = names.filter(n=>stockOn[n]);
+    const keys2 = act.length ? rangeKeys(stSrc[act[0]].map(x=>x[kname]), 'fig2') : [];
+    $('lg2').innerHTML = baseTag(keys2) + ' ' + names.map(n=>{
+      const s = keys2.length ? sf(stSrc[n],'close',kname).filter(p=>keys2.includes(p.k)) : [];
+      const isKR = ['삼성전자','SK하이닉스','삼성전기'].includes(n);
+      return `<span class="lg ${stockOn[n]?'':'off'}" onclick="toggleStock('${n}')"><span class="sw" style="background:${STOCK_COLORS[n]||'var(--tx2)'}"></span>${n}${stockOn[n]?lgVal(s, isKR?0:2):''}</span>`;
+    }).join('');
     if(act.length){
-      const keys = rangeKeys(stSrc[act[0]].map(x=>x[kname]));
+      const keys = keys2;
       const cut = s => s.filter(p=>keys.includes(p.k));
       drawLineChart('fig2', act.map(n=>({data:normalize(cut(sf(stSrc[n],'close',kname))),color:STOCK_COLORS[n]||'var(--tx2)'})), keys,{pins:true});
     } else $('fig2').innerHTML='<div class="err">범례에서 종목을 선택하세요</div>';
@@ -371,7 +393,7 @@ function renderFig3(){
     return;
   }
   if(ex && ex.semiconMonthly && ex.semiconMonthly.length){
-    const keys = rangeKeys(ex.semiconMonthly.map(x=>x.ym));
+    const keys = rangeKeys(ex.semiconMonthly.map(x=>x.ym), 'fig3');
     const semi = ex.semiconMonthly.filter(x=>keys.includes(x.ym)).map(x=>({k:x.ym,v:x.eok}));
     const mem = (ex.memoryMonthly||[]).filter(x=>keys.includes(x.ym)).map(x=>({k:x.ym,v:x.eok}));
     let rS=[], lgX='';
@@ -437,9 +459,10 @@ function setTab(t){
   document.getElementById('paneNews').style.display = t==='news' ? '' : 'none';
   if(t==='news' && !NEWS) loadNews();
 }
-async function loadNews(){
+async function loadNews(force){
+  document.getElementById('newsList').innerHTML = '<div class="err">뉴스 불러오는 중…</div>';
   try{
-    const r = await fetch(API.replace('type=all','type=news'));
+    const r = await fetch(API.replace('type=all','type=news') + (force ? '&nocache=1' : ''));
     NEWS = await r.json();
     renderNews();
   }catch(e){
@@ -461,45 +484,48 @@ function setEvCat(c){ evCat=c; renderEvents(); }
 
 document.querySelectorAll('#rangeFilters .fbtn').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#rangeFilters .fbtn').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); RANGE=b.dataset.r; ZOOM={s:0,e:1}; renderAll();
+  b.classList.add('on'); RANGE=b.dataset.r; ZOOM={fig1:{s:0,e:1},fig2:{s:0,e:1},fig3:{s:0,e:1}}; renderAll();
 });
 
 // ---------- 줌/팬 (전 차트 공유) ----------
 function attachZoom(id){
   const el = $(id);
+  const Z = () => ZOOM[id];
   el.addEventListener('wheel', e=>{
     e.preventDefault();
+    const z = Z();
     const rect = el.getBoundingClientRect();
     const fx = Math.min(1,Math.max(0,(e.clientX-rect.left)/rect.width));
-    const span = ZOOM.e-ZOOM.s;
+    const span = z.e-z.s;
     const f = e.deltaY<0 ? 0.8 : 1.25;
     let ns = Math.max(0.02, Math.min(1, span*f));
-    const c = ZOOM.s + span*fx;
-    ZOOM.s = Math.max(0, c - ns*fx); ZOOM.e = Math.min(1, ZOOM.s+ns);
+    const c = z.s + span*fx;
+    z.s = Math.max(0, c - ns*fx); z.e = Math.min(1, z.s+ns);
     renderAll();
   },{passive:false});
-  el.addEventListener('dblclick', ()=>{ ZOOM={s:0,e:1}; renderAll(); });
+  el.addEventListener('dblclick', ()=>{ ZOOM[id]={s:0,e:1}; renderAll(); });
   let drag=null, pinch=null, lastTap=0;
   el.addEventListener('touchstart', e=>{
     if(e.touches.length===2){
       pinch = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
     } else if(e.touches.length===1){
-      drag = {x:e.touches[0].clientX, y:e.touches[0].clientY, s:ZOOM.s, e:ZOOM.e};
+      const z = Z();
+      drag = {x:e.touches[0].clientX, y:e.touches[0].clientY, s:z.s, e:z.e};
       const now = Date.now();
-      if(now-lastTap<300){ ZOOM={s:0,e:1}; renderAll(); }
+      if(now-lastTap<300){ ZOOM[id]={s:0,e:1}; renderAll(); }
       lastTap = now;
     }
   },{passive:true});
   el.addEventListener('touchmove', e=>{
+    const z = Z();
     if(e.touches.length===2 && pinch){
       e.preventDefault();
       const d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
-      const span = drag ? drag.e-drag.s : ZOOM.e-ZOOM.s;
       const f = pinch/d;
-      const cur = ZOOM.e-ZOOM.s;
+      const cur = z.e-z.s;
       let ns = Math.max(0.02, Math.min(1, cur*(f>1?1.04:0.96)));
-      const c = (ZOOM.s+ZOOM.e)/2;
-      ZOOM.s = Math.max(0, c-ns/2); ZOOM.e = Math.min(1, ZOOM.s+ns);
+      const c = (z.s+z.e)/2;
+      z.s = Math.max(0, c-ns/2); z.e = Math.min(1, z.s+ns);
       pinch = d; renderAll();
     } else if(e.touches.length===1 && drag){
       const dx = e.touches[0].clientX-drag.x, dy = e.touches[0].clientY-drag.y;
@@ -510,14 +536,13 @@ function attachZoom(id){
         let shift = -dx/rect.width*span;
         let s = drag.s+shift, en = drag.e+shift;
         if(s<0){ en-=s; s=0; } if(en>1){ s-=en-1; en=1; }
-        ZOOM={s:s,e:en}; renderAll();
+        ZOOM[id]={s:s,e:en}; renderAll();
       }
     }
   },{passive:false});
   el.addEventListener('touchend', ()=>{ drag=null; pinch=null; });
-  // PC 드래그 팬
   let mdrag=null;
-  el.addEventListener('mousedown', e=>{ mdrag={x:e.clientX,s:ZOOM.s,e:ZOOM.e}; });
+  el.addEventListener('mousedown', e=>{ const z=Z(); mdrag={x:e.clientX,s:z.s,e:z.e}; });
   window.addEventListener('mousemove', e=>{
     if(!mdrag) return;
     const rect = el.getBoundingClientRect();
@@ -525,7 +550,7 @@ function attachZoom(id){
     let shift = -(e.clientX-mdrag.x)/rect.width*span;
     let s = mdrag.s+shift, en = mdrag.e+shift;
     if(s<0){ en-=s; s=0; } if(en>1){ s-=en-1; en=1; }
-    ZOOM={s:s,e:en}; renderAll();
+    ZOOM[id]={s:s,e:en}; renderAll();
   });
   window.addEventListener('mouseup', ()=>{ mdrag=null; });
 }
