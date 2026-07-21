@@ -31,6 +31,13 @@ h1 span{color:var(--exp)}
 .live-badge b{color:var(--exp)}
 .live-badge .tag{color:var(--tx3);font-size:11px;border:1px solid var(--line);border-radius:3px;padding:1px 6px}
 .updated{color:var(--tx3);font-size:11.5px;margin-top:6px}
+.tickerbar{display:flex;gap:10px;overflow-x:auto;padding:2px 0 14px;margin-bottom:8px;-webkit-overflow-scrolling:touch}
+.tk{min-width:148px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 13px;cursor:pointer;box-shadow:0 1px 3px rgba(27,36,48,.06);flex-shrink:0}
+.tk:hover{box-shadow:0 2px 8px rgba(27,36,48,.14)}
+.tk .nm{font-size:12px;font-weight:600;color:var(--tx2)}
+.tk .val{font-family:'IBM Plex Mono',monospace;font-size:16.5px;font-weight:700;margin-top:1px}
+.tk .chg{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700}
+.tk .hi{font-size:10.5px;color:var(--tx3);margin-top:2px}
 .filters{display:flex;gap:7px;margin:0 0 22px;flex-wrap:wrap}
 .fbtn{background:var(--card);border:1.5px solid var(--line);color:var(--tx2);border-radius:6px;padding:8px 15px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
 .fbtn.on{background:var(--tx);color:#fff;border-color:var(--tx)}
@@ -92,6 +99,8 @@ footer{color:var(--tx3);font-size:11.5px;line-height:1.8;margin-top:8px}
   <div class="updated mono" id="updatedText">데이터 로딩 중</div>
 </header>
 
+<div class="tickerbar" id="tickerbar"><div class="err" style="padding:8px">대표지표 로딩 중…</div></div>
+
 <div class="filters" id="rangeFilters">
   <button class="fbtn on" data-r="all">전체</button>
   <button class="fbtn" data-r="ytd">YTD</button>
@@ -115,7 +124,11 @@ footer{color:var(--tx3);font-size:11.5px;line-height:1.8;margin-top:8px}
 <section>
   <div class="fig">FIG. 02</div>
   <h2 id="t2">반도체·빅테크 종목 — 정규화 멀티라인</h2>
-  <div class="desc">범례 클릭으로 종목 표시/숨김</div>
+  <div class="desc" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+    <span>범례 클릭으로 종목 표시/숨김</span>
+    <span style="display:flex;gap:6px">
+      <button class="fbtn" onclick="setAllStocks(true)">전체 표시</button>
+      <button class="fbtn" onclick="setAllStocks(false)">전체 해제</button></span></div>
   <div class="legend" id="lg2"></div>
   <div id="fig2" class="chartbox"></div>
   <div class="zoomhint">휠/핀치 = 확대 · 드래그 = 이동 · 더블클릭 = 초기화</div>
@@ -131,7 +144,7 @@ footer{color:var(--tx3);font-size:11.5px;line-height:1.8;margin-top:8px}
   <div class="readout" id="ro3" style="display:none"></div>
 </section>
 
-<section>
+<section id="evtSection">
   <div class="fig">FIG. 04</div>
   <h2 id="t4">매크로 이벤트 · 실시간 뉴스</h2>
   <div class="filters" style="margin:8px 0 12px">
@@ -480,6 +493,25 @@ function renderNews(){
     '<div class="zoomhint">필터: 종목·반도체·시장·거시·환율무역·지정학·실적·美정치·中테크 9개 카테고리 · ' + NEWS.updated + ' 수집</div>';
 }
 function toggleStock(n){ stockOn[n]=!stockOn[n]; renderAll(); }
+function setAllStocks(on){ Object.keys(stockOn).forEach(n=>stockOn[n]=on); renderAll(); }
+async function loadTickerbar(){
+  try{
+    const r = await fetch(API.replace('type=all','type=tickerbar'));
+    const j = await r.json();
+    if(!j.items || !j.items.length) throw 0;
+    document.getElementById('tickerbar').innerHTML = j.items.map(x=>{
+      const up = x.chg>=0;
+      return `<div class="tk" onclick="document.getElementById('evtSection').scrollIntoView({behavior:'smooth'})">
+        <div class="nm">${x.id}</div>
+        <div class="val">${fmt(x.cur, x.dec)}${x.unit}</div>
+        <div class="chg ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(x.chg).toFixed(2)}%</div>
+        ${x.ytdHigh!=null?`<div class="hi">연중최고 ${fmt(x.ytdHigh,x.dec)}${x.unit} (${x.ytdHighDate})</div>`:''}
+      </div>`;
+    }).join('');
+  }catch(e){
+    document.getElementById('tickerbar').innerHTML = '<div class="err" style="padding:8px">대표지표 연결 실패 — 새로고침 시 재시도</div>';
+  }
+}
 function setEvCat(c){ evCat=c; renderEvents(); }
 
 document.querySelectorAll('#rangeFilters .fbtn').forEach(b=>b.onclick=()=>{
@@ -579,6 +611,7 @@ function applyLatestBadge(){
   }
   applyLatestBadge();
   renderAll();
+  loadTickerbar();
 })();
 </script>
 </body>
