@@ -8,81 +8,124 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#F5F6F8; --card:#FFFFFF; --card2:#F0F2F5; --line:#DDE2E9;
-  --tx:#1B2430; --tx2:#4A5561; --tx3:#8B96A2;
+  --bg:#EFF1F5; --card:#FFFFFF; --card2:#F5F7FA; --line:#E2E7EF;
+  --ink:#141B26; --ink2:#1C2A3D;
+  --tx:#161E29; --tx2:#46525F; --tx3:#87919D;
   --exp:#0E7A55; --mem:#A87A12; --kospi:#1F5FB8; --spx:#5A6570; --nasdaq:#7A3FB5;
   --samsung:#1F5FB8; --hynix:#C52A46; --semco:#6B4DC0;
   --nvda:#0E7A55; --mu:#A87A12; --amd:#B5303F; --avgo:#994D91;
   --tsm:#1F7E54; --msft:#2E6FB5; --meta:#3B52C4; --goog:#0E7A87; --intc:#2764AE; --sndk:#8A5A2E;
   --hl:#FFB300;
+  --up:#C52A46; --down:#1F5FB8; --mint:#3FCF8E;
+  --shadow:0 1px 2px rgba(19,26,36,.05),0 4px 14px rgba(19,26,36,.05);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans KR',sans-serif;font-size:14px;line-height:1.6}
+body{background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans KR',sans-serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--kospi)} a:hover{color:#17497E}
 .mono{font-family:'IBM Plex Mono',monospace}
-.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
-header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:26px}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+header{background:linear-gradient(135deg,var(--ink) 0%,var(--ink2) 100%);border:1px solid #0D131C;border-radius:16px;padding:22px 24px 16px;margin-bottom:22px;box-shadow:0 10px 28px rgba(19,26,36,.20)}
 .hd-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
-h1{font-size:21px;font-weight:700;letter-spacing:.04em}
-h1 span{color:var(--exp)}
-.hd-sub{color:var(--tx2);font-size:12.5px;margin-top:4px}
-.live-badge{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:9px 14px;font-size:13.5px;font-weight:500;display:flex;align-items:center;gap:9px;min-height:40px;box-shadow:0 1px 3px rgba(27,36,48,.06)}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--exp);animation:pulse 1.6s infinite}
+h1{font-size:22px;font-weight:700;letter-spacing:.05em;color:#F4F7FB}
+h1 span{color:var(--mint)}
+.hd-sub{color:#8DA0B8;font-size:13px;margin-top:5px}
+.live-badge{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 16px;font-size:13.5px;font-weight:500;color:#DCE5F0;display:flex;align-items:center;gap:10px;min-height:44px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 3px rgba(63,207,142,.16);animation:pulse 1.6s infinite;flex-shrink:0}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
-.live-badge b{color:var(--exp)}
-.live-badge .tag{color:var(--tx3);font-size:11px;border:1px solid var(--line);border-radius:3px;padding:1px 6px}
-.updated{color:var(--tx3);font-size:11.5px;margin-top:6px}
-.tickerbar{display:flex;gap:10px;overflow-x:auto;padding:2px 0 14px;margin-bottom:8px;-webkit-overflow-scrolling:touch}
-.tk{min-width:148px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 13px;cursor:pointer;box-shadow:0 1px 3px rgba(27,36,48,.06);flex-shrink:0}
-.tk:hover{box-shadow:0 2px 8px rgba(27,36,48,.14)}
-.tk .nm{font-size:12px;font-weight:600;color:var(--tx2)}
-.tk .val{font-family:'IBM Plex Mono',monospace;font-size:16.5px;font-weight:700;margin-top:1px}
-.tk .chg{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700}
-.tk .hi{font-size:10.5px;color:var(--tx3);margin-top:2px}
-.filters{display:flex;gap:7px;margin:0 0 22px;flex-wrap:wrap}
-.fbtn{background:var(--card);border:1.5px solid var(--line);color:var(--tx2);border-radius:6px;padding:8px 15px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
-.fbtn.on{background:var(--tx);color:#fff;border-color:var(--tx)}
-section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-bottom:22px;box-shadow:0 1px 3px rgba(27,36,48,.06)}
-.fig{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;color:var(--exp);letter-spacing:.14em;margin-bottom:2px}
-h2{font-size:16.5px;font-weight:700;margin-bottom:2px}
-.desc{color:var(--tx2);font-size:12.5px;margin-bottom:14px}
-.legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:13px;font-weight:600;color:var(--tx2)}
-.lg{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
-.lg.off{opacity:.3}
-.sw{width:16px;height:4px;border-radius:2px}
-.chartbox{touch-action:pan-y;cursor:grab}
+.live-badge b{color:var(--mint)}
+.live-badge .tag{color:#8DA0B8;font-size:11px;border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:1px 7px}
+.updated{color:#67788F;font-size:11.5px;margin-top:12px;letter-spacing:.08em}
+.tickerbar{display:flex;gap:10px;overflow-x:auto;padding:2px 0 14px;margin-bottom:10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tickerbar::-webkit-scrollbar{display:none}
+.tk{min-width:164px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px 12px;cursor:pointer;box-shadow:var(--shadow);flex-shrink:0;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
+.tk::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--tx3);opacity:.25}
+.tk:has(.chg.up)::before{background:var(--up);opacity:1}
+.tk:has(.chg.down)::before{background:var(--down);opacity:1}
+.tk:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(19,26,36,.14)}
+.tk .nm{font-size:12px;font-weight:700;color:var(--tx3);letter-spacing:.02em}
+.tk .val{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:700;margin-top:3px;letter-spacing:-.01em}
+.tk .chg{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;margin-top:6px;padding:2px 8px;border-radius:5px}
+.up{color:var(--up)}.down{color:var(--down)}
+.tk .chg.up{background:rgba(197,42,70,.08)}
+.tk .chg.down{background:rgba(31,95,184,.08)}
+.tk .hi{font-size:10.5px;color:var(--tx3);margin-top:6px}
+.filters{display:flex;gap:8px;margin:0 0 22px;flex-wrap:wrap}
+.fbtn{background:var(--card);border:1px solid var(--line);color:var(--tx2);border-radius:8px;padding:9px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 1px 2px rgba(19,26,36,.04);transition:border-color .12s,color .12s,background .12s}
+.fbtn:hover{border-color:#C3CDDA;color:var(--tx)}
+.fbtn.on{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:0 2px 8px rgba(19,26,36,.28)}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:20px;box-shadow:var(--shadow)}
+.fig{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:var(--exp);letter-spacing:.2em;margin-bottom:3px}
+h2{font-size:17.5px;font-weight:700;letter-spacing:-.01em;margin-bottom:3px}
+.desc{color:var(--tx2);font-size:13px;margin-bottom:14px}
+.legend{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;font-size:13px;font-weight:600;color:var(--tx2)}
+.lg{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;transition:opacity .12s,border-color .12s}
+.lg:hover{border-color:#C3CDDA}
+.lg.off{opacity:.32}
+.sw{width:16px;height:4px;border-radius:2px;flex-shrink:0}
+.chartbox{touch-action:pan-y;cursor:grab;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 8px 4px;margin-top:2px}
 .chartbox:active{cursor:grabbing}
 svg{width:100%;height:auto;display:block}
 .axis{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;fill:var(--tx2)}
-.gline{stroke:var(--line);stroke-width:.7}
-.err{color:var(--tx3);font-size:13px;padding:32px 0;text-align:center}
+.gline{stroke:#E5EAF1;stroke-width:1}
+.err{color:var(--tx3);font-size:13.5px;padding:32px 0;text-align:center}
 .pin{cursor:pointer}
-.readout{background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:11px 14px;font-size:13px;color:var(--tx2);margin-top:10px;min-height:44px}
+.readout{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--hl);border-radius:8px;padding:12px 15px;font-size:13.5px;color:var(--tx2);margin-top:12px;min-height:46px}
 .readout b{color:var(--tx)}
-.zoomhint{color:var(--tx3);font-size:11px;text-align:right;margin-top:4px}
+.zoomhint{color:var(--tx3);font-size:11px;text-align:right;margin-top:6px}
 .ev-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-.ev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:12px}
-.ev-card{background:var(--card2);border:1px solid var(--line);border-left:4px solid var(--tx3);border-radius:6px;padding:12px 14px;cursor:pointer;transition:box-shadow .15s}
-.ev-card:hover{box-shadow:0 2px 8px rgba(27,36,48,.12)}
-.ev-card.sel{background:#FFF7E0;border-color:var(--hl);box-shadow:0 0 0 2px var(--hl)}
-.ev-num{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:var(--tx3)}
+.ev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.ev-card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--tx3);border-radius:10px;padding:14px 16px;cursor:pointer;box-shadow:0 1px 2px rgba(19,26,36,.04);transition:transform .15s,box-shadow .15s}
+.ev-card:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(19,26,36,.10)}
+.ev-card.sel{background:#FFF8E1;border-color:var(--hl);box-shadow:0 0 0 2px var(--hl)}
+.ev-num{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;color:var(--tx3);letter-spacing:.06em}
 .ev-date{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:var(--tx2)}
-.ev-label{font-size:14px;font-weight:700;margin:3px 0 2px}
-.ev-desc{font-size:12px;color:var(--tx2)}
-.news-item{display:block;background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:11px 14px;margin-bottom:9px;text-decoration:none;color:var(--tx)}
-.news-item:hover{box-shadow:0 2px 8px rgba(27,36,48,.12)}
-.news-meta{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:var(--tx3);display:flex;gap:8px;margin-bottom:3px}
-.news-meta .rg{border:1px solid var(--line);border-radius:3px;padding:0 5px}
-.news-title{font-size:13.5px;font-weight:600;line-height:1.45}
-.snap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
-.snap{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
-.snap .nm{font-size:12.5px;font-weight:600;color:var(--tx2)}
-.snap .pr{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;margin-top:2px}
-.snap .chg{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;margin-top:1px}
-.up{color:#C52A46}.down{color:#1F5FB8}
-.expcard{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:16px 18px;font-size:14px}
+.ev-label{font-size:14.5px;font-weight:700;margin:4px 0 2px}
+.ev-desc{font-size:12.5px;color:var(--tx2);line-height:1.55}
+.news-item{display:block;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 16px;margin-bottom:10px;text-decoration:none;color:var(--tx);transition:transform .15s,box-shadow .15s}
+.news-item:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(19,26,36,.10);color:var(--tx)}
+.news-meta{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:var(--tx3);display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.news-meta .rg{background:var(--card2);border:1px solid var(--line);border-radius:4px;padding:1px 7px;color:var(--tx2);font-weight:700}
+.news-orig{font-size:11.5px;color:var(--tx3);margin-top:2px;line-height:1.4}
+.news-cat{border-radius:3px;padding:0 6px;font-weight:700;color:#fff}
+.chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;border-radius:20px;padding:2px 9px;margin:6px 5px 0 0;border:1px solid var(--line)}
+.chip.u{color:#C52A46;background:rgba(197,42,70,.08)}
+.chip.d{color:#1F5FB8;background:rgba(31,95,184,.08)}
+.news-title{font-size:14px;font-weight:600;line-height:1.5}
+.snap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;padding:4px}
+.snap{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;box-shadow:0 1px 2px rgba(19,26,36,.04)}
+.snap .nm{font-size:12.5px;font-weight:700;color:var(--tx3)}
+.snap .pr{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;margin-top:2px}
+.snap .chg{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;margin-top:2px}
+.expcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;font-size:14px;margin:4px}
 .expcard b{color:var(--exp);font-size:17px}
 footer{color:var(--tx3);font-size:11.5px;line-height:1.8;margin-top:8px}
-@media(max-width:640px){.wrap{padding:18px 12px 40px}section{padding:15px 14px}h1{font-size:18px}.axis{font-size:16px}}
+@media(max-width:640px){
+  .wrap{padding:14px 12px 44px}
+  header{padding:18px 16px 13px;border-radius:14px}
+  h1{font-size:18px}
+  .hd-sub{font-size:13px}
+  .live-badge{font-size:13px;padding:9px 13px}
+  .tickerbar{margin:0 -12px 8px;padding-left:12px;padding-right:12px}
+  .tk{min-width:150px}
+  section{padding:18px 15px;border-radius:12px}
+  .axis{font-size:16px}
+  .fbtn{min-height:44px;padding:10px 16px;font-size:14px}
+  .desc{font-size:14px}
+  .lg{min-height:36px;font-size:13.5px;padding:6px 13px}
+  .readout{font-size:14px}
+  .ev-card{padding:16px}
+  .ev-label{font-size:15px}
+  .ev-desc{font-size:14px}
+  .ev-date{font-size:12.5px}
+  .news-item{padding:15px 16px}
+  .news-orig{font-size:11.5px;color:var(--tx3);margin-top:2px;line-height:1.4}
+.news-cat{border-radius:3px;padding:0 6px;font-weight:700;color:#fff}
+.chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;border-radius:20px;padding:2px 9px;margin:6px 5px 0 0;border:1px solid var(--line)}
+.chip.u{color:#C52A46;background:rgba(197,42,70,.08)}
+.chip.d{color:#1F5FB8;background:rgba(31,95,184,.08)}
+.news-title{font-size:14.5px}
+  .snap .pr{font-size:17px}
+}
 </style>
 </head>
 <body>
@@ -160,6 +203,11 @@ footer{color:var(--tx3);font-size:11.5px;line-height:1.8;margin-top:8px}
     <div class="desc" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
       <span>국내·해외 버즈 상위 중 주식 관련만 자동 필터 · 탭하면 원문</span>
       <button class="fbtn" onclick="loadNews(true)">🔄 지금 업데이트</button></div>
+    <div class="filters" id="newsSort" style="margin:0 0 8px">
+      <button class="fbtn on" onclick="setNewsSort('score')">🔥 버즈순</button>
+      <button class="fbtn" onclick="setNewsSort('time')">🕐 최신순</button>
+    </div>
+    <div class="ev-filters" id="newsCats"></div>
     <div id="newsList"><div class="err">뉴스 불러오는 중…</div></div>
   </div>
 </section>
@@ -179,7 +227,7 @@ const API = 'https://script.google.com/macros/s/AKfycbwpnp_BrcFQaWazju8fGAS6wC82
 const EXPORT_FALLBACK = {"updated":"2026-07-16 (내장 폴백)","semiconMonthly":[{"ym":"2025-01","eok":102.2,"totalEok":491.8},{"ym":"2025-02","eok":98,"totalEok":522.9},{"ym":"2025-03","eok":132,"totalEok":580.6},{"ym":"2025-04","eok":118,"totalEok":580.4},{"ym":"2025-05","eok":139.3,"totalEok":572.6},{"ym":"2025-06","eok":151.4,"totalEok":598.3},{"ym":"2025-07","eok":149,"totalEok":607.2},{"ym":"2025-08","eok":153,"totalEok":582.6},{"ym":"2025-09","eok":167.9,"totalEok":659},{"ym":"2025-10","eok":158.6,"totalEok":595.1},{"ym":"2025-11","eok":174.4,"totalEok":607.5},{"ym":"2025-12","eok":209.2,"totalEok":695.1},{"ym":"2026-01","eok":206.9,"totalEok":658.5},{"ym":"2026-02","eok":252.5,"totalEok":676.5},{"ym":"2026-03","eok":329.7,"totalEok":873.4},{"ym":"2026-04","eok":320.4,"totalEok":857.4},{"ym":"2026-05","eok":372.9,"totalEok":876.1},{"ym":"2026-06","eok":449.5,"totalEok":1021.7}],"memoryMonthly":[{"ym":"2025-01","eok":47.7},{"ym":"2025-02","eok":47.3},{"ym":"2025-03","eok":66.9},{"ym":"2025-04","eok":57.6},{"ym":"2025-05","eok":73.4},{"ym":"2025-06","eok":82.3},{"ym":"2025-07","eok":75.6},{"ym":"2025-08","eok":85},{"ym":"2025-09","eok":93.5},{"ym":"2025-10","eok":88.9},{"ym":"2025-11","eok":101.6},{"ym":"2025-12","eok":126.4},{"ym":"2026-01","eok":121.1},{"ym":"2026-02","eok":158.1},{"ym":"2026-03","eok":207.6},{"ym":"2026-04","eok":208.3},{"ym":"2026-05","eok":249.5},{"ym":"2026-06","eok":290.4}],"latest":{"period":"7/1~10","semiEok":112.1,"yoy":193,"tag":"잠정"}};
 
 const CATS = { tech:{label:'기술/사이클',c:'#A87A12'}, trade:{label:'무역/관세',c:'#B06E0F'},
-  money:{label:'통화/신용',c:'#2E6FB5'}, policy:{label:'정책/수급',c:'#1F7E54'}, geo:{label:'지정학',c:'#B5303F'} };
+  money:{label:'통화/신용',c:'#2E6FB5'}, policy:{label:'정책/수급',c:'#1F7E54'}, geo:{label:'지정학',c:'#B5303F'}, earn:{label:'기업 실적',c:'#0E7A87'} };
 const EVENTS = [
   {date:'2025-01-27',num:'01',cat:'tech',c:'#6B4DC0',label:'DeepSeek 충격',desc:'AI 인프라 투자 회의론 확산, 빅테크 일제히 급락'},
   {date:'2025-04-02',num:'02',cat:'trade',c:'#B06E0F',label:'해방의 날 관세',desc:'한국 25%·일본 24%·EU 20% 상호관세 발표'},
@@ -194,7 +242,10 @@ const EVENTS = [
   {date:'2026-02-28',num:'11',cat:'geo',c:'#B5303F',label:'美·이스라엘 이란공습',desc:'하메네이 사망, WTI +6.94%'},
   {date:'2026-05-06',num:'12',cat:'tech',c:'#A87A12',label:'KOSPI 7,400 장중',desc:'메모리 사이클 정점, 18M +208%'},
   {date:'2026-07-16',num:'13',cat:'tech',c:'#A87A12',label:'코스피 -6.4% 급락',desc:'고점 대비 조정 본격화, 레버리지 경계 확산'},
-  {date:'2026-07-20',num:'14',cat:'tech',c:'#A87A12',label:'코스피 6,500선 (-4.5%)',desc:'글로벌 반도체 급락 여파, 기술적 약세장 진입 평가'}
+  {date:'2026-07-20',num:'14',cat:'tech',c:'#A87A12',label:'코스피 6,500선 (-4.5%)',desc:'글로벌 반도체 급락 여파, 기술적 약세장 진입 평가'},
+  {date:'2026-07-30',num:'15',cat:'tech',c:'#A87A12',label:'서킷브레이커 이틀 연속',desc:'코스피·코스닥 사상 첫 이틀 연속 발동, 종가 5,593(5,500선 턱걸이)'},
+  {date:'2026-07-30',num:'16',cat:'earn',c:'#0E7A87',label:'삼성전자 2Q 반도체 89.2조',desc:'반도체 매출 127.5조·영업이익 89.2조, 빅테크 5社 LTA로 CAPA 70% 5년 확보'},
+  {date:'2026-07-31',num:'17',cat:'tech',c:'#A87A12',label:'코스피 +13% 급반등',desc:'SOX +8.19% 훈풍·빅테크 호실적, 매수 사이드카 동시 발동(09:06), 삼전 +24%·하이닉스 +28% 시초가'}
 ];
 const STOCK_COLORS = {'삼성전자':'var(--samsung)','SK하이닉스':'var(--hynix)','삼성전기':'var(--semco)',
   'NVIDIA':'var(--nvda)','Micron':'var(--mu)','AMD':'var(--amd)','Broadcom':'var(--avgo)',
@@ -482,15 +533,41 @@ async function loadNews(force){
     document.getElementById('newsList').innerHTML = '<div class="err">뉴스 연결 실패 — 새로고침 시 재시도</div>';
   }
 }
+const NEWS_CAT_COLOR = {chip:'#0E7A55',cn:'#B5303F',earn:'#0E7A87',macro:'#2E6FB5',trade:'#A87A12',geo:'#6B4DC0',market:'#C52A46',etc:'#8B96A2'};
+let newsSort='score', newsCat='all';
+function setNewsSort(s){ newsSort=s; document.querySelectorAll('#newsSort .fbtn').forEach((b,i)=>b.classList.toggle('on', (i===0)===(s==='score'))); renderNews(); }
+function setNewsCat(c){ newsCat=c; renderNews(); }
+function chipFor(id){
+  const s = DATA.stocks || {};
+  const arr = (s.dailyStocks && s.dailyStocks[id]) || (s.dailyIndices && s.dailyIndices[id]);
+  if(!arr || arr.length<2) return '';
+  const chg = (arr[arr.length-1].close/arr[arr.length-2].close-1)*100;
+  return `<span class="chip ${chg>=0?'u':'d'}">${id} ${chg>=0?'+':''}${chg.toFixed(1)}%</span>`;
+}
 function renderNews(){
-  if(!NEWS || !NEWS.items || !NEWS.items.length){
-    document.getElementById('newsList').innerHTML = '<div class="err">표시할 뉴스 없음</div>'; return;
-  }
-  document.getElementById('newsList').innerHTML = NEWS.items.map(n =>
-    `<a class="news-item" href="${n.link}" target="_blank" rel="noopener">
-      <div class="news-meta"><span class="rg">${n.region==='KR'?'국내':'해외'}</span><span>${n.time}</span><span>${n.source}</span></div>
-      <div class="news-title">${n.title}</div></a>`).join('') +
-    '<div class="zoomhint">필터: 종목·반도체·시장·거시·환율무역·지정학·실적·美정치·中테크 9개 카테고리 · ' + NEWS.updated + ' 수집</div>';
+  const box = document.getElementById('newsList');
+  if(!NEWS || !NEWS.items || !NEWS.items.length){ box.innerHTML = '<div class="err">표시할 뉴스 없음</div>'; return; }
+  // 카테고리 칩
+  const cats = {};
+  NEWS.items.forEach(n=>{ if(!cats[n.cat]) cats[n.cat]={label:n.catLabel||'기타',n:0}; cats[n.cat].n++; });
+  document.getElementById('newsCats').innerHTML =
+    `<button class="fbtn ${newsCat==='all'?'on':''}" onclick="setNewsCat('all')">전체 ${NEWS.items.length}</button>` +
+    Object.keys(cats).map(k=>`<button class="fbtn ${newsCat===k?'on':''}" onclick="setNewsCat('${k}')">${cats[k].label} ${cats[k].n}</button>`).join('');
+  // 정렬·필터
+  let list = NEWS.items.filter(n=>newsCat==='all'||n.cat===newsCat);
+  list = newsSort==='score' ? list.slice().sort((a,b)=>(b.score||0)-(a.score||0)) : list;
+  box.innerHTML = list.map(n=>{
+    const col = NEWS_CAT_COLOR[n.cat]||'#8B96A2';
+    const chips = (n.tickers||[]).map(chipFor).join('');
+    return `<a class="news-item" href="${n.link}" target="_blank" rel="noopener">
+      <div class="news-meta"><span class="news-cat" style="background:${col}">${n.catLabel||''}</span>
+        <span class="rg">${n.region==='KR'?'국내':'해외'}</span><span>${n.time}</span><span>${n.source}</span>
+        ${n.dup>1?`<span style="color:#C52A46">🔥${n.dup}건</span>`:''}</div>
+      <div class="news-title">${n.title}</div>
+      ${n.titleEn?`<div class="news-orig">원문: ${n.titleEn}</div>`:''}
+      ${chips}</a>`;
+  }).join('') +
+  `<div class="zoomhint">해외 기사 자동 한국어 번역 · 버즈순 = 중복 보도수·키워드 관련도 기준 · ${NEWS.updated} 수집</div>`;
 }
 function toggleStock(n){ stockOn[n]=!stockOn[n]; renderAll(); }
 function setAllStocks(on){ Object.keys(stockOn).forEach(n=>stockOn[n]=on); renderAll(); }
