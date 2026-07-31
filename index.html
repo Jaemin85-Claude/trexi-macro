@@ -23,11 +23,12 @@
   --sp:20px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;overflow-x:hidden}
+body{overflow-x:hidden}
 body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:var(--fs-base);line-height:1.65;
   font-feature-settings:'tnum' 1}
 .mono{font-family:var(--mono)}
-.wrap{max-width:1000px;margin:0 auto;padding:0 22px 72px}
+.wrap{max-width:1000px;margin:0 auto;padding:0 22px 72px;width:100%}
 :focus-visible{outline:2px solid var(--petrol);outline-offset:2px;border-radius:3px}
 
 /* ---------- 마스트헤드 ---------- */
@@ -49,17 +50,16 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:
 .lede-label{font-family:var(--mono);font-size:var(--fs-xs);letter-spacing:.14em;color:var(--petrol);display:block;margin-bottom:8px}
 
 /* ---------- 계기 레일 ---------- */
-.rail{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
-  display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,1fr);overflow-x:auto;
-  scrollbar-width:none;background:var(--surface)}
-.rail::-webkit-scrollbar{display:none}
-.tk{padding:13px 16px;border-right:1px solid var(--rule);cursor:pointer;min-width:0;transition:background .15s}
-.tk:last-child{border-right:0}
+.rail{border:1px solid var(--rule);display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface)}
+.tk{padding:9px 12px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  cursor:pointer;min-width:0;transition:background .15s}
+.tk:nth-child(3n){border-right:0}
+.tk:nth-child(n+4){border-bottom:0}
 .tk:hover{background:var(--petrol-soft)}
-.tk .nm{font-size:var(--fs-xs);color:var(--muted);letter-spacing:.02em;white-space:nowrap}
-.tk .val{font-family:var(--mono);font-size:var(--fs-lg);font-weight:700;letter-spacing:-.02em;margin-top:1px}
-.tk .chg{font-family:var(--mono);font-size:var(--fs-sm);font-weight:600}
-.tk .hi{font-size:11px;color:var(--faint);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tk .nm{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tk .val{font-family:var(--mono);font-size:15px;font-weight:700;letter-spacing:-.03em;margin-top:0;white-space:nowrap}
+.tk .chg{font-family:var(--mono);font-size:12px;font-weight:600}
+.tk .hi{font-size:10px;color:var(--faint);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .up{color:var(--up)} .down{color:var(--down)}
 
 /* ---------- 기간 필터 (sticky) ---------- */
@@ -86,7 +86,7 @@ h2 span{font-family:var(--sans);font-size:var(--fs-xs);font-weight:400;color:var
 .lg{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;padding:3px 0}
 .lg.off{opacity:.28}
 .sw{width:15px;height:3px;border-radius:2px;flex-shrink:0}
-.chartbox{touch-action:pan-y;cursor:grab;margin:0 -6px}
+.chartbox{touch-action:pan-y;cursor:grab}
 .chartbox:active{cursor:grabbing}
 svg{width:100%;height:auto;display:block}
 svg .axis{font-family:var(--mono);font-size:15px;font-weight:500;fill:var(--muted)}
@@ -127,6 +127,9 @@ svg.mob .axis{font-size:27px}
 .news-meta .rg{border:1px solid var(--rule-2);border-radius:2px;padding:0 5px}
 .news-title{font-size:var(--fs-base);font-weight:600;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .news-orig{font-size:var(--fs-xs);color:var(--faint);margin-top:3px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.news-more{display:flex;gap:8px;justify-content:center;padding:16px 0 4px}
+.news-more .fbtn{min-width:132px;justify-content:center}
+.nm-c{font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:5px}
 .chip{display:inline-block;font-family:var(--mono);font-size:var(--fs-xs);font-weight:700;border:1px solid var(--rule-2);
   border-radius:20px;padding:2px 10px;margin:8px 5px 0 0}
 .chip.u{color:var(--up);border-color:rgba(200,16,46,.32)} .chip.d{color:var(--down);border-color:rgba(22,80,155,.32)}
@@ -150,16 +153,14 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
   .mast-title{font-size:24px}
   .issue{text-align:left}
   .lede{font-size:18px;padding:20px 0}
-  .rail{grid-auto-flow:row;grid-template-columns:1fr 1fr;grid-auto-columns:auto}
-  .tk{border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
-  .tk:nth-child(2n){border-right:0}
+  .tk{padding:8px 10px}
+  .tk .val{font-size:14px}
   section{padding:20px 15px;margin-top:12px}
   h2{font-size:19px}
   .ev-grid{grid-template-columns:1fr}
   .fbtn{min-height:42px}
-  .chartbox{margin:0 -10px}
 }
-@media(max-width:400px){ .rail{grid-template-columns:1fr} .tk{border-right:0} }
+@media(max-width:390px){ .rail{grid-template-columns:repeat(2,1fr)} .tk:nth-child(3n){border-right:1px solid var(--rule)} .tk:nth-child(2n){border-right:0} .tk:nth-child(n+4){border-bottom:1px solid var(--rule)} .tk:nth-child(n+5){border-bottom:0} }
 </style>
 </head>
 <body>
@@ -488,7 +489,7 @@ function renderAll(){
     const series = [{data:normalize(kS),color:'var(--kospi)'},{data:normalize(sS),color:'var(--spx)',dash:'6 5'}];
     if(nS.length) series.push({data:normalize(nS),color:'var(--nasdaq)',dash:'2 4'});
     drawLineChart('fig1', series, keys,{pins:true});
-  } else drawLineChart('fig1',[],[],{errMsg:'지수 데이터 연결 실패 — Apps Script 웹앱 상태를 확인하세요'});
+  } else drawLineChart('fig1',[],[],{errMsg: dm && !DAILY_LOADED ? '일별 데이터를 불러오는 중입니다.' : '지수 데이터를 받지 못했습니다. 새로고침하면 다시 시도합니다.'});
 
   // FIG.02
   const stSrc = DATA.stocks && (dm ? DATA.stocks.dailyStocks : DATA.stocks.stocks);
@@ -506,7 +507,7 @@ function renderAll(){
       const cut = s => s.filter(p=>keys.includes(p.k));
       drawLineChart('fig2', act.map(n=>({data:normalize(cut(sf(stSrc[n],'close',kname))),color:STOCK_COLORS[n]||'var(--tx2)'})), keys,{pins:true});
     } else $('fig2').innerHTML='<div class="err">범례에서 종목을 선택하세요</div>';
-  } else drawLineChart('fig2',[],[],{errMsg:'종목 데이터 연결 실패 — Apps Script 웹앱 상태를 확인하세요'});
+  } else drawLineChart('fig2',[],[],{errMsg: dm && !DAILY_LOADED ? '일별 데이터를 불러오는 중입니다.' : '종목 데이터를 받지 못했습니다. 새로고침하면 다시 시도합니다.'});
 
   renderFig3();
   renderEvents();
@@ -614,9 +615,11 @@ async function loadNews(force){
   }
 }
 const NEWS_CAT_COLOR = {chip:'#0E7A55',cn:'#B5303F',earn:'#0E7A87',macro:'#2E6FB5',trade:'#A87A12',geo:'#6B4DC0',market:'#C52A46',etc:'#8B96A2'};
-let newsSort='score', newsCat='all';
-function setNewsSort(s){ newsSort=s; document.querySelectorAll('#newsSort .fbtn').forEach((b,i)=>b.classList.toggle('on', (i===0)===(s==='score'))); renderNews(); }
-function setNewsCat(c){ newsCat=c; renderNews(); }
+let newsSort='score', newsCat='all', newsShown=5;
+function setNewsSort(s){ newsSort=s; newsShown=5; document.querySelectorAll('#newsSort .fbtn').forEach((b,i)=>b.classList.toggle('on', (i===0)===(s==='score'))); renderNews(); }
+function setNewsCat(c){ newsCat=c; newsShown=5; renderNews(); }
+function moreNews(){ newsShown += 5; renderNews(); }
+function foldNews(){ newsShown = 5; renderNews(); document.getElementById('evtSection').scrollIntoView({behavior:'smooth'}); }
 function chipFor(id){
   const s = DATA.stocks || {};
   const arr = (s.dailyStocks && s.dailyStocks[id]) || (s.dailyIndices && s.dailyIndices[id]);
@@ -636,6 +639,8 @@ function renderNews(){
   // 정렬·필터
   let list = NEWS.items.filter(n=>newsCat==='all'||n.cat===newsCat);
   list = newsSort==='score' ? list.slice().sort((a,b)=>(b.score||0)-(a.score||0)) : list;
+  const total = list.length, shown = Math.min(newsShown, total);
+  list = list.slice(0, shown);
   box.innerHTML = list.map(n=>{
     const col = NEWS_CAT_COLOR[n.cat]||'#8B96A2';
     const chips = (n.tickers||[]).map(chipFor).join('');
@@ -647,7 +652,10 @@ function renderNews(){
       ${n.titleEn?`<div class="news-orig" title="${n.titleEn}">원문: ${n.titleEn}</div>`:''}
       ${chips}</a>`;
   }).join('') +
-  `<div class="zoomhint">해외 기사 자동 한국어 번역 · 버즈순 = 중복 보도수·키워드 관련도 기준 · ${NEWS.updated} 수집</div>`;
+  `<div class="news-more">${
+     shown < total ? `<button class="fbtn" onclick="moreNews()">${Math.min(5,total-shown)}건 더 보기 <span class="nm-c">${shown} / ${total}</span></button>` : ''
+   }${ shown > 5 ? `<button class="fbtn" onclick="foldNews()">접기</button>` : '' }</div>
+   <div class="zoomhint">해외 기사 자동 한국어 번역 · 버즈순 = 중복 보도수·키워드 관련도 기준 · ${NEWS.updated} 수집</div>`;
 }
 let DRAM = null;
 async function loadDram(){
@@ -821,18 +829,31 @@ function applyLatestBadge(){
     (DATA.stocks&&DATA.stocks.updated ? ' · STOCKS ' + DATA.stocks.updated : ' · 주가 연결 실패');
 }
 
+let DAILY_LOADED = false, dailyLoading = false;
+async function apiGet(t){ const r = await fetch(API.replace('type=all','type='+t)); return r.json(); }
+async function ensureDaily(silent){
+  if(DAILY_LOADED || dailyLoading) return;
+  dailyLoading = true;
+  try{
+    const j = await apiGet('stocks_d');
+    if(!DATA.stocks) DATA.stocks = { indices:{}, stocks:{} };
+    DATA.stocks.dailyIndices = j.dailyIndices || {};
+    DATA.stocks.dailyStocks = j.dailyStocks || {};
+    DAILY_LOADED = true;
+    composeLede(); fitLede(); renderAll();
+  }catch(e){
+    if(!silent && isDaily()) $('fig1').innerHTML = '<div class="err">일별 데이터를 받지 못했습니다. 잠시 후 기간 버튼을 다시 눌러 주세요.</div>';
+  }finally{ dailyLoading = false; }
+}
+
 (async function init(){
   Object.keys(STOCK_COLORS).forEach(n=>stockOn[n]=DEFAULT_ON.includes(n));
   ['fig1','fig2','fig3'].forEach(attachZoom);
-  try{
-    const r = await fetch(API);
-    const j = await r.json();
-    DATA.export = j.export && j.export.semiconMonthly && j.export.semiconMonthly.length ? j.export : EXPORT_FALLBACK;
-    DATA.stocks = j.stocks || null;
-  }catch(e){
-    DATA.export = EXPORT_FALLBACK;
-    DATA.stocks = null;
-  }
+  // 수출·월봉을 나눠 받아 한쪽이 실패해도 나머지는 표시
+  const [ex, st] = await Promise.allSettled([apiGet('export'), apiGet('stocks_m')]);
+  DATA.export = (ex.status==='fulfilled' && ex.value && ex.value.semiconMonthly && ex.value.semiconMonthly.length)
+    ? ex.value : EXPORT_FALLBACK;
+  DATA.stocks = (st.status==='fulfilled' && st.value && st.value.indices) ? st.value : null;
   applyLatestBadge();
   composeLede();
   fitLede();
@@ -840,8 +861,9 @@ function applyLatestBadge(){
   loadTickerbar();
   loadDram();
   loadEvents();
-  if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitLede);
   attachZoom('fig5');
+  ensureDaily(true);           // 일별은 뒤에서 조용히 채움
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitLede);
   let rz; window.addEventListener('resize', ()=>{
     clearTimeout(rz); rz = setTimeout(()=>{
       const m = window.innerWidth < 700;
