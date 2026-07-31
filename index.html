@@ -85,7 +85,11 @@ h2 span{font-family:var(--sans);font-size:var(--fs-xs);font-weight:400;color:var
 .legend{display:flex;gap:11px 15px;flex-wrap:wrap;font-size:var(--fs-sm);font-weight:600;color:var(--muted);margin:14px 0 8px;align-items:center}
 .lg{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;padding:3px 0}
 .lg.off{opacity:.28}
-.sw{width:15px;height:3px;border-radius:2px;flex-shrink:0}
+.sw{width:18px;height:3px;border-radius:2px;flex-shrink:0}
+.sw-bar{height:11px;width:11px;border-radius:2px;opacity:.72}
+.lg em{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--faint);
+  border:1px solid var(--rule-2);border-radius:2px;padding:0 4px;margin-left:2px}
+.lg b{color:var(--ink)}
 .chartbox{touch-action:pan-y;cursor:grab}
 .chartbox:active{cursor:grabbing}
 svg{width:100%;height:auto;display:block}
@@ -314,9 +318,18 @@ let EVENTS = [
   {date:'2026-07-30',num:'16',cat:'earn',c:'#0E7A87',label:'삼성전자 2Q 반도체 89.2조',desc:'반도체 매출 127.5조·영업이익 89.2조, 빅테크 5社 LTA로 CAPA 70% 5년 확보'},
   {date:'2026-07-31',num:'17',cat:'tech',c:'#A87A12',label:'코스피 +13% 급반등',desc:'SOX +8.19% 훈풍·빅테크 호실적, 매수 사이드카 동시 발동(09:06), 삼전 +24%·하이닉스 +28% 시초가'}
 ];
-const STOCK_COLORS = {'삼성전자':'var(--samsung)','SK하이닉스':'var(--hynix)','삼성전기':'var(--semco)',
-  'NVIDIA':'var(--nvda)','Micron':'var(--mu)','AMD':'var(--amd)','Broadcom':'var(--avgo)',
-  'TSMC':'var(--tsm)','Microsoft':'var(--msft)','Alphabet':'var(--goog)','Intel':'var(--intc)','SanDisk':'var(--sndk)','Meta':'var(--meta)'};
+const PAL = {
+  exp:'#0E7A55', mem:'#B8891E', kospi:'#16509B', spx:'#6B7684', nasdaq:'#7A3FB5',
+  samsung:'#16509B', hynix:'#C8102E', semco:'#6B4DC0', nvda:'#0E7A55', mu:'#B8891E',
+  amd:'#B5303F', avgo:'#994D91', tsm:'#1F7E54', msft:'#2E6FB5', goog:'#0E7A87',
+  intc:'#2764AE', sndk:'#8A5A2E', meta:'#3B52C4', muted:'#6B7684', hl:'#E8A317'
+};
+const swHtml = (c,dash)=> dash
+  ? `<span class="sw" style="background:repeating-linear-gradient(90deg,${c} 0 5px,transparent 5px 9px)"></span>`
+  : `<span class="sw" style="background:${c}"></span>`;
+const STOCK_COLORS = {'삼성전자':PAL.samsung,'SK하이닉스':PAL.hynix,'삼성전기':PAL.semco,
+  'NVIDIA':PAL.nvda,'Micron':PAL.mu,'AMD':PAL.amd,'Broadcom':PAL.avgo,'TSMC':PAL.tsm,
+  'Microsoft':PAL.msft,'Alphabet':PAL.goog,'Intel':PAL.intc,'SanDisk':PAL.sndk,'Meta':PAL.meta};
 const DEFAULT_ON = ['삼성전자','SK하이닉스','NVIDIA','Micron'];
 
 let DATA = { export: null, stocks: null };
@@ -386,8 +399,8 @@ function drawLineChart(elId, seriesList, keys, opts={}){
     const xi = evIndex(ev, keys);
     if(xi>=0){
       const bw = (W-L-R)/Math.max(keys.length-1,1);
-      g += `<rect x="${x(xi)-bw/2}" y="${T-6}" width="${bw}" height="${H-B-T+6}" fill="var(--hl)" opacity=".16"/>`;
-      g += `<line x1="${x(xi)}" y1="${T-6}" x2="${x(xi)}" y2="${H-B}" stroke="var(--hl)" stroke-width="3"/>`;
+      g += `<rect x="${x(xi)-bw/2}" y="${T-6}" width="${bw}" height="${H-B-T+6}" fill="${PAL.hl}" opacity=".18"/>`;
+      g += `<line x1="${x(xi)}" y1="${T-6}" x2="${x(xi)}" y2="${H-B}" stroke="${PAL.hl}" stroke-width="3"/>`;
     }
   }
   // 우축
@@ -430,7 +443,7 @@ function drawLineChart(elId, seriesList, keys, opts={}){
       const sel = selEvt===ev.num;
       g += `<line x1="${px}" y1="${T-6}" x2="${px}" y2="${H-B}" stroke="${ev.c}" stroke-width="${sel?2:1}" opacity=".4"/>`;
       g += `<g class="pin" onclick="pickEvent('${ev.num}')">`+
-           `<circle cx="${px}" cy="${MOB?T-30:T-24}" r="${MOB?(sel?26:22):(sel?16:13)}" fill="${ev.c}"${sel?' stroke="var(--hl)" stroke-width="3"':''}/>`+
+           `<circle cx="${px}" cy="${MOB?T-30:T-24}" r="${MOB?(sel?26:22):(sel?16:13)}" fill="${ev.c}"${sel?' stroke="${PAL.hl}" stroke-width="3"':''}/>`+
            `<text x="${px}" y="${MOB?T-24:T-19}" text-anchor="middle" font-size="${MOB?20:12}" font-family="IBM Plex Mono" fill="#FFFFFF" font-weight="700">${ev.num}</text></g>`;
     });
   }
@@ -448,7 +461,7 @@ function pickEvent(num){
   selEvt = (selEvt===num) ? null : num;
   const ev = EVENTS.find(e=>e.num===num);
   const msg = selEvt
-    ? `<span class="mono" style="color:${ev.c};font-weight:700">[${ev.num}] ${ev.date}</span> · <b>${ev.label}</b> — ${ev.desc} <span style="color:var(--tx3)">(${CATS[ev.cat].label})</span>`
+    ? `<span class="mono" style="color:${ev.c};font-weight:700">[${ev.num}] ${ev.date}</span> · <b>${ev.label}</b> — ${ev.desc} <span style="color:var(--faint)">(${CATS[ev.cat].label})</span>`
     : '이벤트 핀 또는 하단 이벤트 카드를 클릭하면 상세가 표시됩니다.';
   $('ro1').innerHTML = msg; $('ro2').innerHTML = msg;
   renderAll();
@@ -463,14 +476,14 @@ function lgVal(series, dec){
     (chg>=0?'#C52A46':'#1F5FB8') + '">(' + (chg>=0?'+':'') + chg.toFixed(1) + '%)</span>';
 }
 function baseTag(keys){
-  return keys.length ? '<span style="border:1px solid var(--line);border-radius:3px;padding:1px 7px;font-size:11px;color:var(--tx3)">기준 ' + keyLabel(keys[0]) + ' = 100 · 등락률은 구간 기준</span>' : '';
+  return keys.length ? '<span style="border:1px solid var(--rule);border-radius:3px;padding:1px 7px;font-size:11px;color:var(--faint)">기준 ' + keyLabel(keys[0]) + ' = 100 · 등락률은 구간 기준</span>' : '';
 }
 function sf(list, key, kname){ return (list||[]).map(x=>({k:x[kname], v:x[key]})); }
 
 function renderAll(){
   const dm = isDaily();
-  $('t1').innerHTML = 'KOSPI vs S&P 500 — 정규화 지수 ' + (dm?'<span style="font-size:12px;color:var(--tx3)">(일봉)</span>':'');
-  $('t2').innerHTML = '반도체·빅테크 종목 — 정규화 멀티라인 ' + (dm?'<span style="font-size:12px;color:var(--tx3)">(일봉)</span>':'');
+  $('t1').innerHTML = '지수는 지금 어디에 서 있나' + (dm?' <span>(일봉)</span>':'');
+  $('t2').innerHTML = '누가 지수를 끌었나' + (dm?' <span>(일봉)</span>':'');
 
   if(RANGE==='today'){ renderToday(); renderFig3(); renderEvents(); return; }
 
@@ -483,11 +496,11 @@ function renderAll(){
     const kS = cut(sf(idxSrc.KOSPI,'close',kname)), sS = cut(sf(idxSrc.SPX,'close',kname));
     const nS = idxSrc.NASDAQ ? cut(sf(idxSrc.NASDAQ,'close',kname)) : [];
     $('lg1').innerHTML = baseTag(keys) +
-      ` <span class="lg"><span class="sw" style="background:var(--kospi)"></span>KOSPI${lgVal(kS,2)}</span>
-      <span class="lg"><span class="sw" style="background:var(--spx)"></span>S&P 500${lgVal(sS,2)}</span>` +
-      (nS.length ? `<span class="lg"><span class="sw" style="background:var(--nasdaq)"></span>NASDAQ${lgVal(nS,2)}</span>` : '');
-    const series = [{data:normalize(kS),color:'var(--kospi)'},{data:normalize(sS),color:'var(--spx)',dash:'6 5'}];
-    if(nS.length) series.push({data:normalize(nS),color:'var(--nasdaq)',dash:'2 4'});
+      ` <span class="lg">${swHtml(PAL.kospi)}KOSPI${lgVal(kS,2)}</span>
+      <span class="lg">${swHtml(PAL.spx,true)}S&P 500${lgVal(sS,2)}</span>` +
+      (nS.length ? `<span class="lg">${swHtml(PAL.nasdaq,true)}NASDAQ${lgVal(nS,2)}</span>` : '');
+    const series = [{data:normalize(kS),color:PAL.kospi},{data:normalize(sS),color:PAL.spx,dash:'6 5'}];
+    if(nS.length) series.push({data:normalize(nS),color:PAL.nasdaq,dash:'2 4'});
     drawLineChart('fig1', series, keys,{pins:true});
   } else drawLineChart('fig1',[],[],{errMsg: dm && !DAILY_LOADED ? '일별 데이터를 불러오는 중입니다.' : '지수 데이터를 받지 못했습니다. 새로고침하면 다시 시도합니다.'});
 
@@ -500,12 +513,12 @@ function renderAll(){
     $('lg2').innerHTML = baseTag(keys2) + ' ' + names.map(n=>{
       const s = keys2.length ? sf(stSrc[n],'close',kname).filter(p=>keys2.includes(p.k)) : [];
       const isKR = ['삼성전자','SK하이닉스','삼성전기'].includes(n);
-      return `<span class="lg ${stockOn[n]?'':'off'}" onclick="toggleStock('${n}')"><span class="sw" style="background:${STOCK_COLORS[n]||'var(--tx2)'}"></span>${n}${stockOn[n]?lgVal(s, isKR?0:2):''}</span>`;
+      return `<span class="lg ${stockOn[n]?'':'off'}" onclick="toggleStock('${n}')"><span class="sw" style="background:${STOCK_COLORS[n]||PAL.muted}"></span>${n}${stockOn[n]?lgVal(s, isKR?0:2):''}</span>`;
     }).join('');
     if(act.length){
       const keys = keys2;
       const cut = s => s.filter(p=>keys.includes(p.k));
-      drawLineChart('fig2', act.map(n=>({data:normalize(cut(sf(stSrc[n],'close',kname))),color:STOCK_COLORS[n]||'var(--tx2)'})), keys,{pins:true});
+      drawLineChart('fig2', act.map(n=>({data:normalize(cut(sf(stSrc[n],'close',kname))),color:STOCK_COLORS[n]||PAL.muted})), keys,{pins:true});
     } else $('fig2').innerHTML='<div class="err">범례에서 종목을 선택하세요</div>';
   } else drawLineChart('fig2',[],[],{errMsg: dm && !DAILY_LOADED ? '일별 데이터를 불러오는 중입니다.' : '종목 데이터를 받지 못했습니다. 새로고침하면 다시 시도합니다.'});
 
@@ -520,7 +533,7 @@ function renderFig3(){
     const l = ex && ex.latest;
     $('lg3').innerHTML='';
     $('fig3').innerHTML = l
-      ? `<div class="expcard">🏭 최신 수출 속보 <b>${l.period} 반도체 $${fmt(l.semiEok)}억 ${l.yoy!=null?((l.yoy>=0?'+':'')+fmt(l.yoy)+'%'):''} YoY${l.mom!=null?(' · '+(l.mom>=0?'+':'')+fmt(l.mom)+'% MoM'):''}</b> <span class="tag" style="border:1px solid var(--line);border-radius:3px;padding:1px 6px;font-size:11px;color:var(--tx3)">${l.tag}</span><br><span style="color:var(--tx2);font-size:12.5px">수출은 월 단위 지표입니다 — 월별 크로스 차트는 3M 이상 필터에서 표시됩니다.</span></div>`
+      ? `<div class="expcard">🏭 최신 수출 속보 <b>${l.period} 반도체 $${fmt(l.semiEok)}억 ${l.yoy!=null?((l.yoy>=0?'+':'')+fmt(l.yoy)+'%'):''} YoY${l.mom!=null?(' · '+(l.mom>=0?'+':'')+fmt(l.mom)+'% MoM'):''}</b> <span class="tag" style="border:1px solid var(--rule);border-radius:3px;padding:1px 6px;font-size:11px;color:var(--faint)">${l.tag}</span><br><span style="color:var(--muted);font-size:12.5px">수출은 월 단위 지표입니다 — 월별 크로스 차트는 3M 이상 필터에서 표시됩니다.</span></div>`
       : '<div class="err">수출 데이터 연결 실패</div>';
     return;
   }
@@ -533,16 +546,16 @@ function renderFig3(){
     if(st && st['삼성전자'] && st['SK하이닉스']){
       const cut = s => s.filter(p=>keys.includes(p.k));
       rS = [
-        {data:normalize(cut(sf(st['삼성전자'],'close','ym'))),color:'var(--samsung)',dash:'6 5',op:.9},
-        {data:normalize(cut(sf(st['SK하이닉스'],'close','ym'))),color:'var(--hynix)',dash:'6 5',op:.9},
+        {data:normalize(cut(sf(st['삼성전자'],'close','ym'))),color:PAL.samsung,dash:'6 5',op:.9},
+        {data:normalize(cut(sf(st['SK하이닉스'],'close','ym'))),color:PAL.hynix,dash:'6 5',op:.9},
       ];
-      lgX = `<span class="lg"><span class="sw" style="background:var(--samsung)"></span>삼성전자(우)</span>
-        <span class="lg"><span class="sw" style="background:var(--hynix)"></span>SK하이닉스(우)</span>`;
+      lgX = `<span class="lg">${swHtml(PAL.samsung,true)}삼성전자 <em>우축</em></span>
+        <span class="lg">${swHtml(PAL.hynix,true)}SK하이닉스 <em>우축</em></span>`;
     }
-    $('lg3').innerHTML = `<span class="lg"><span class="sw" style="background:var(--exp)"></span>반도체 수출(좌, 억$)</span>
-      <span class="lg"><span class="sw" style="background:var(--mem)"></span>메모리 HS854232(좌, 억$)</span>` + lgX;
-    drawLineChart('fig3',[{data:mem,color:'var(--mem)'}],keys,
-      {bars:{data:semi,color:'var(--exp)'}, rSeries:rS, rAxis:rS.length>0, h:420, pins:true});
+    $('lg3').innerHTML = `<span class="lg"><span class="sw sw-bar" style="background:${PAL.exp}"></span>반도체 수출 <em>좌축·막대</em></span>
+      <span class="lg">${swHtml(PAL.mem)}메모리 HS854232 <em>좌축·선</em></span>` + lgX;
+    drawLineChart('fig3',[{data:mem,color:PAL.mem}],keys,
+      {bars:{data:semi,color:PAL.exp}, rSeries:rS, rAxis:rS.length>0, h:420, pins:true});
   } else drawLineChart('fig3',[],[],{errMsg:'수출 데이터 연결 실패'});
 }
 
@@ -561,11 +574,11 @@ function renderToday(){
   $('lg1').innerHTML=''; $('lg2').innerHTML='';
   if(di){
     const last = (di.KOSPI||[]).slice(-1)[0];
-    $('t1').innerHTML = '오늘의 지수 <span style="font-size:12px;color:var(--tx3)">('+(last?last.d:'')+' 종가 기준, 전일 대비)</span>';
+    $('t1').innerHTML = '오늘의 지수 <span>('+(last?last.d:'')+' 종가 기준, 전일 대비)</span>';
     $('fig1').innerHTML = '<div class="snap-grid">'+snapHtml('KOSPI',di.KOSPI,true)+snapHtml('S&P 500',di.SPX,true)+'</div>';
   } else $('fig1').innerHTML='<div class="err">지수 데이터 연결 실패</div>';
   if(ds){
-    $('t2').innerHTML = '오늘의 종목 <span style="font-size:12px;color:var(--tx3)">(최근 종가, 전일 대비)</span>';
+    $('t2').innerHTML = '오늘의 종목 <span>(최근 종가, 전일 대비)</span>';
     $('fig2').innerHTML = '<div class="snap-grid">'+Object.keys(ds).map(n=>snapHtml(n,ds[n],false)).join('')+'</div>';
   } else $('fig2').innerHTML='<div class="err">종목 데이터 연결 실패</div>';
 }
@@ -669,10 +682,10 @@ function renderDram(){
   const S = DRAM.seed.series;
   // X축 = 시딩 전체 월 합집합
   const yms = [...new Set(S.flatMap(s=>s.points.map(p=>p.ym)))].sort();
-  const cmap = {exp:'var(--exp)',mem:'var(--mem)',kospi:'var(--kospi)',hynix:'var(--hynix)'};
+  const cmap = {exp:PAL.exp,mem:PAL.mem,kospi:PAL.kospi,hynix:PAL.hynix};
   const left = S.slice(0,2), right = S.slice(2);
   document.getElementById('lg5').innerHTML = S.map((s,i)=>
-    `<span class="lg"><span class="sw" style="background:${cmap[s.color]}"></span>${s.id}${i>1?'(우)':''} ${s.points.length?('<b>$'+s.points[s.points.length-1].v+'</b>'):''}</span>`).join('');
+    `<span class="lg">${swHtml(cmap[s.color], i>1)}${s.id} ${s.points.length?('<b>$'+s.points[s.points.length-1].v+'</b>'):''}${i>1?' <em>우축</em>':''}</span>`).join('');
   drawLineChart('fig5',
     left.map(s=>({data:s.points.map(p=>({k:p.ym,v:p.v})),color:cmap[s.color]})),
     yms,
@@ -681,7 +694,7 @@ function renderDram(){
   const dn = DRAM.daily && DRAM.daily.length;
   document.getElementById('ro5').innerHTML =
     (DRAM.seed.outlook||[]).map(o=>'· '+o).join('<br>') +
-    `<br><span style="color:var(--tx3)">${DRAM.seed.note} · *표시는 보도상 범위·역산값 · 시트 일별 누적 ${dn?dn+'건 반영':'대기 중'}</span>`;
+    `<br><span style="color:var(--faint)">${DRAM.seed.note} · *표시는 보도상 범위·역산값 · 시트 일별 누적 ${dn?dn+'건 반영':'대기 중'}</span>`;
 }
 function toggleStock(n){ stockOn[n]=!stockOn[n]; renderAll(); }
 function setAllStocks(on){ Object.keys(stockOn).forEach(n=>stockOn[n]=on); renderAll(); }
