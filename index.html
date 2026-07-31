@@ -3,260 +3,290 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TREXI MACRO — 반도체 수출·증시 관제 대시보드</title>
+<title>트렉시 관측 — 반도체 사이클 리포트</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+/* ============================================================
+   트렉시 관측 — 디자인 토큰
+   색 원칙: 브랜드 액센트는 petrol 하나. 적/청은 오직 등락 데이터에만.
+   ============================================================ */
 :root{
-  --bg:#EFF1F5; --card:#FFFFFF; --card2:#F5F7FA; --line:#E2E7EF;
-  --ink:#141B26; --ink2:#1C2A3D;
-  --tx:#161E29; --tx2:#46525F; --tx3:#87919D;
-  --exp:#0E7A55; --mem:#A87A12; --kospi:#1F5FB8; --spx:#5A6570; --nasdaq:#7A3FB5;
-  --samsung:#1F5FB8; --hynix:#C52A46; --semco:#6B4DC0;
-  --nvda:#0E7A55; --mu:#A87A12; --amd:#B5303F; --avgo:#994D91;
-  --tsm:#1F7E54; --msft:#2E6FB5; --meta:#3B52C4; --goog:#0E7A87; --intc:#2764AE; --sndk:#8A5A2E;
-  --hl:#FFB300;
-  --up:#C52A46; --down:#1F5FB8; --mint:#3FCF8E;
-  --shadow:0 1px 2px rgba(19,26,36,.05),0 4px 14px rgba(19,26,36,.05);
+  --paper:#FBFAF7; --surface:#FFFFFF; --surface-2:#F4F3EF;
+  --ink:#14181D; --muted:#6B6F76; --faint:#9AA0A6;
+  --rule:#E3E1DB; --rule-2:#D2CFC7;
+  --petrol:#0E5F58; --petrol-soft:#E7F0EE;
+  --up:#C8102E; --down:#16509B;
+  --fs-xs:12px; --fs-sm:13.5px; --fs-base:15px; --fs-lg:17px;
+  --serif:'Gowun Batang',serif; --sans:'IBM Plex Sans KR',sans-serif; --mono:'IBM Plex Mono',monospace;
+  --sp:20px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans KR',sans-serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
-a{color:var(--kospi)} a:hover{color:#17497E}
-.mono{font-family:'IBM Plex Mono',monospace}
-.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
-header{background:linear-gradient(135deg,var(--ink) 0%,var(--ink2) 100%);border:1px solid #0D131C;border-radius:16px;padding:22px 24px 16px;margin-bottom:22px;box-shadow:0 10px 28px rgba(19,26,36,.20)}
-.hd-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
-h1{font-size:22px;font-weight:700;letter-spacing:.05em;color:#F4F7FB}
-h1 span{color:var(--mint)}
-.hd-sub{color:#8DA0B8;font-size:13px;margin-top:5px}
-.live-badge{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 16px;font-size:13.5px;font-weight:500;color:#DCE5F0;display:flex;align-items:center;gap:10px;min-height:44px}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 3px rgba(63,207,142,.16);animation:pulse 1.6s infinite;flex-shrink:0}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
-.live-badge b{color:var(--mint)}
-.live-badge .tag{color:#8DA0B8;font-size:11px;border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:1px 7px}
-.updated{color:#67788F;font-size:11.5px;margin-top:12px;letter-spacing:.08em}
-.tickerbar{display:flex;gap:10px;overflow-x:auto;padding:2px 0 14px;margin-bottom:10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.tickerbar::-webkit-scrollbar{display:none}
-.tk{min-width:164px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px 12px;cursor:pointer;box-shadow:var(--shadow);flex-shrink:0;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
-.tk::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--tx3);opacity:.25}
-.tk:has(.chg.up)::before{background:var(--up);opacity:1}
-.tk:has(.chg.down)::before{background:var(--down);opacity:1}
-.tk:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(19,26,36,.14)}
-.tk .nm{font-size:12px;font-weight:700;color:var(--tx3);letter-spacing:.02em}
-.tk .val{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:700;margin-top:3px;letter-spacing:-.01em}
-.tk .chg{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;margin-top:6px;padding:2px 8px;border-radius:5px}
-.up{color:var(--up)}.down{color:var(--down)}
-.tk .chg.up{background:rgba(197,42,70,.08)}
-.tk .chg.down{background:rgba(31,95,184,.08)}
-.tk .hi{font-size:10.5px;color:var(--tx3);margin-top:6px}
-.filters{display:flex;gap:8px;margin:0 0 22px;flex-wrap:wrap}
-.fbtn{background:var(--card);border:1px solid var(--line);color:var(--tx2);border-radius:8px;padding:9px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 1px 2px rgba(19,26,36,.04);transition:border-color .12s,color .12s,background .12s}
-.fbtn:hover{border-color:#C3CDDA;color:var(--tx)}
-.fbtn.on{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:0 2px 8px rgba(19,26,36,.28)}
-section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:20px;box-shadow:var(--shadow)}
-.fig{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:var(--exp);letter-spacing:.2em;margin-bottom:3px}
-h2{font-size:17.5px;font-weight:700;letter-spacing:-.01em;margin-bottom:3px}
-.desc{color:var(--tx2);font-size:13px;margin-bottom:14px}
-.legend{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;font-size:13px;font-weight:600;color:var(--tx2)}
-.lg{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;transition:opacity .12s,border-color .12s}
-.lg:hover{border-color:#C3CDDA}
-.lg.off{opacity:.32}
-.sw{width:16px;height:4px;border-radius:2px;flex-shrink:0}
-.chartbox{touch-action:pan-y;cursor:grab;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 8px 4px;margin-top:2px}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:var(--fs-base);line-height:1.65;
+  font-feature-settings:'tnum' 1}
+.mono{font-family:var(--mono)}
+.wrap{max-width:1000px;margin:0 auto;padding:0 22px 72px}
+:focus-visible{outline:2px solid var(--petrol);outline-offset:2px;border-radius:3px}
+
+/* ---------- 마스트헤드 ---------- */
+.masthead{padding:34px 0 0}
+.mast-top{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+.mast-title{font-family:var(--serif);font-weight:700;font-size:29px;letter-spacing:-.01em;line-height:1.2}
+.mast-title em{font-style:normal;color:var(--petrol)}
+.mast-kicker{font-family:var(--mono);font-size:var(--fs-xs);letter-spacing:.16em;color:var(--petrol);text-transform:uppercase;margin-bottom:5px}
+.issue{font-family:var(--mono);font-size:var(--fs-xs);color:var(--muted);text-align:right;line-height:1.7}
+.mast-rule{height:2px;background:var(--ink);margin:14px 0 0}
+.mast-rule-thin{height:1px;background:var(--rule-2);margin-top:2px}
+
+/* ---------- 리드 (시그니처) ---------- */
+.lede{font-family:var(--serif);font-size:20px;line-height:1.75;padding:26px 0 24px;letter-spacing:-.005em}
+#lede{white-space:nowrap;overflow:hidden}
+.lede-n{font-family:var(--mono);font-weight:600;font-size:.94em;letter-spacing:-.01em}
+.lede-n.up{color:var(--up)} .lede-n.down{color:var(--down)}
+.lede-tag{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--rule-2);border-radius:2px;padding:1px 6px;vertical-align:2px}
+.lede-label{font-family:var(--mono);font-size:var(--fs-xs);letter-spacing:.14em;color:var(--petrol);display:block;margin-bottom:8px}
+
+/* ---------- 계기 레일 ---------- */
+.rail{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,1fr);overflow-x:auto;
+  scrollbar-width:none;background:var(--surface)}
+.rail::-webkit-scrollbar{display:none}
+.tk{padding:13px 16px;border-right:1px solid var(--rule);cursor:pointer;min-width:0;transition:background .15s}
+.tk:last-child{border-right:0}
+.tk:hover{background:var(--petrol-soft)}
+.tk .nm{font-size:var(--fs-xs);color:var(--muted);letter-spacing:.02em;white-space:nowrap}
+.tk .val{font-family:var(--mono);font-size:var(--fs-lg);font-weight:700;letter-spacing:-.02em;margin-top:1px}
+.tk .chg{font-family:var(--mono);font-size:var(--fs-sm);font-weight:600}
+.tk .hi{font-size:11px;color:var(--faint);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.up{color:var(--up)} .down{color:var(--down)}
+
+/* ---------- 기간 필터 (sticky) ---------- */
+.toolbar{position:sticky;top:0;z-index:20;background:rgba(251,250,247,.94);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--rule);padding:11px 0;margin-bottom:6px}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.fbtn{font-family:var(--sans);font-size:var(--fs-sm);font-weight:600;color:var(--muted);
+  background:transparent;border:1px solid var(--rule-2);border-radius:2px;padding:8px 13px;cursor:pointer;
+  transition:all .15s;min-height:38px}
+.fbtn:hover{border-color:var(--petrol);color:var(--petrol)}
+.fbtn.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+
+/* ---------- 관측 섹션 ---------- */
+section{background:var(--surface);border:1px solid var(--rule);padding:24px var(--sp) 22px;margin-top:18px}
+.sec-head{border-left:3px solid var(--petrol);padding-left:13px;margin-bottom:16px}
+.fig{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--petrol);display:block}
+h2{font-family:var(--serif);font-size:21px;font-weight:700;line-height:1.35;letter-spacing:-.01em;margin-top:2px}
+h2 span{font-family:var(--sans);font-size:var(--fs-xs);font-weight:400;color:var(--faint)}
+.desc{font-size:var(--fs-sm);color:var(--muted);margin-top:5px}
+.desc.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+
+/* ---------- 범례 · 차트 ---------- */
+.legend{display:flex;gap:11px 15px;flex-wrap:wrap;font-size:var(--fs-sm);font-weight:600;color:var(--muted);margin:14px 0 8px;align-items:center}
+.lg{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;padding:3px 0}
+.lg.off{opacity:.28}
+.sw{width:15px;height:3px;border-radius:2px;flex-shrink:0}
+.chartbox{touch-action:pan-y;cursor:grab;margin:0 -6px}
 .chartbox:active{cursor:grabbing}
 svg{width:100%;height:auto;display:block}
-.axis{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;fill:var(--tx2)}
-.gline{stroke:#E5EAF1;stroke-width:1}
-.err{color:var(--tx3);font-size:13.5px;padding:32px 0;text-align:center}
-.pin{cursor:pointer}
-.readout{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--hl);border-radius:8px;padding:12px 15px;font-size:13.5px;color:var(--tx2);margin-top:12px;min-height:46px}
-.readout b{color:var(--tx)}
-.zoomhint{color:var(--tx3);font-size:11px;text-align:right;margin-top:6px}
-.ev-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-.ev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
-.ev-card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--tx3);border-radius:10px;padding:14px 16px;cursor:pointer;box-shadow:0 1px 2px rgba(19,26,36,.04);transition:transform .15s,box-shadow .15s}
-.ev-card:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(19,26,36,.10)}
-.ev-card.sel{background:#FFF8E1;border-color:var(--hl);box-shadow:0 0 0 2px var(--hl)}
-.ev-num{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;color:var(--tx3);letter-spacing:.06em}
-.ev-date{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:var(--tx2)}
-.ev-label{font-size:14.5px;font-weight:700;margin:4px 0 2px}
-.ev-desc{font-size:12.5px;color:var(--tx2);line-height:1.55}
-.news-item{display:block;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 16px;margin-bottom:10px;text-decoration:none;color:var(--tx);transition:transform .15s,box-shadow .15s}
-.news-item:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(19,26,36,.10);color:var(--tx)}
-.news-meta{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:var(--tx3);display:flex;align-items:center;gap:8px;margin-bottom:4px}
-.news-meta .rg{background:var(--card2);border:1px solid var(--line);border-radius:4px;padding:1px 7px;color:var(--tx2);font-weight:700}
-.news-orig{font-size:11.5px;color:var(--tx3);margin-top:2px;line-height:1.4}
-.news-cat{border-radius:3px;padding:0 6px;font-weight:700;color:#fff}
-.chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;border-radius:20px;padding:2px 9px;margin:6px 5px 0 0;border:1px solid var(--line)}
-.chip.u{color:#C52A46;background:rgba(197,42,70,.08)}
-.chip.d{color:#1F5FB8;background:rgba(31,95,184,.08)}
-.news-title{font-size:14px;font-weight:600;line-height:1.5}
-.snap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;padding:4px}
-.snap{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px;box-shadow:0 1px 2px rgba(19,26,36,.04)}
-.snap .nm{font-size:12.5px;font-weight:700;color:var(--tx3)}
-.snap .pr{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;margin-top:2px}
-.snap .chg{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;margin-top:2px}
-.expcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;font-size:14px;margin:4px}
-.expcard b{color:var(--exp);font-size:17px}
-footer{color:var(--tx3);font-size:11.5px;line-height:1.8;margin-top:8px}
-@media(max-width:640px){
-  .wrap{padding:14px 12px 44px}
-  header{padding:18px 16px 13px;border-radius:14px}
-  h1{font-size:18px}
-  .hd-sub{font-size:13px}
-  .live-badge{font-size:13px;padding:9px 13px}
-  .tickerbar{margin:0 -12px 8px;padding-left:12px;padding-right:12px}
-  .tk{min-width:150px}
-  section{padding:18px 15px;border-radius:12px}
-  .axis{font-size:16px}
-  .fbtn{min-height:44px;padding:10px 16px;font-size:14px}
-  .desc{font-size:14px}
-  .lg{min-height:36px;font-size:13.5px;padding:6px 13px}
-  .readout{font-size:14px}
-  .ev-card{padding:16px}
-  .ev-label{font-size:15px}
-  .ev-desc{font-size:14px}
-  .ev-date{font-size:12.5px}
-  .news-item{padding:15px 16px}
-  .news-orig{font-size:11.5px;color:var(--tx3);margin-top:2px;line-height:1.4}
-.news-cat{border-radius:3px;padding:0 6px;font-weight:700;color:#fff}
-.chip{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;border-radius:20px;padding:2px 9px;margin:6px 5px 0 0;border:1px solid var(--line)}
-.chip.u{color:#C52A46;background:rgba(197,42,70,.08)}
-.chip.d{color:#1F5FB8;background:rgba(31,95,184,.08)}
-.news-title{font-size:14.5px}
-  .snap .pr{font-size:17px}
-}
-
-/* ===== v2.7 타이포 스케일 통일 & 모바일 최적화 ===== */
-:root{ --fs-xs:12px; --fs-sm:13px; --fs-base:14px; --fs-lg:17px; --fs-xl:20px; }
-body{font-size:var(--fs-base)}
-h1{font-size:var(--fs-xl)} h2{font-size:var(--fs-lg)}
-.fig,.ev-num,.ev-date,.chip,.tk .hi,.zoomhint,.updated{font-size:var(--fs-xs)}
-.hd-sub,.desc,.legend,.readout,.ev-desc,.news-meta,.news-orig,.tk .nm,.tk .chg,.fbtn,.snap .nm,.snap .chg{font-size:var(--fs-sm)}
-.ev-label,.news-title{font-size:var(--fs-base)}
-.tk .val,.snap .pr{font-size:var(--fs-lg)}
-/* 차트 내부 글자 — SVG는 뷰박스 축소 비율만큼 작아지므로 모바일에서 크게 */
-svg .axis{font-size:15px}
+svg .axis{font-family:var(--mono);font-size:15px;font-weight:500;fill:var(--muted)}
 svg.mob .axis{font-size:27px}
-@media(max-width:700px){
-  :root{ --fs-xs:12.5px; --fs-sm:13.5px; --fs-base:15px; --fs-lg:17px; --fs-xl:19px; }
-  .wrap{padding:14px 12px 40px}
-  section{padding:16px 14px;margin-bottom:16px}
-  .live-badge{width:100%}
-  .updated{word-break:keep-all}
-  .tickerbar{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;overflow:visible;padding-bottom:10px}
-  .tk{min-width:0}
-  .filters,.ev-filters{gap:6px}
-  .fbtn{padding:10px 13px}
+.gline{stroke:var(--rule);stroke-width:.8}
+.pin{cursor:pointer}
+.zoomhint{font-family:var(--mono);font-size:11px;color:var(--faint);text-align:right;margin-top:6px}
+.readout{border-top:1px solid var(--rule);margin-top:12px;padding-top:12px;font-size:var(--fs-sm);color:var(--muted);min-height:42px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.readout b{color:var(--ink)}
+.err{color:var(--faint);font-size:var(--fs-sm);padding:38px 0;text-align:center}
+.expcard{background:var(--surface-2);border-left:3px solid var(--petrol);padding:16px 18px;font-size:var(--fs-sm)}
+.expcard b{font-family:var(--mono);color:var(--ink);font-size:var(--fs-lg)}
+
+/* ---------- Today 스냅샷 ---------- */
+.snap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.snap{background:var(--surface);padding:13px 15px}
+.snap .nm{font-size:var(--fs-xs);color:var(--muted)}
+.snap .pr{font-family:var(--mono);font-size:var(--fs-lg);font-weight:700;margin-top:1px}
+.snap .chg{font-family:var(--mono);font-size:var(--fs-sm);font-weight:600}
+
+/* ---------- 이벤트 · 뉴스 ---------- */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin:4px 0 16px}
+.tabs .fbtn{border:0;border-bottom:2px solid transparent;border-radius:0;padding:10px 16px;background:none;color:var(--faint)}
+.tabs .fbtn.on{background:none;color:var(--ink);border-bottom-color:var(--petrol)}
+.ev-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.ev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(242px,1fr));gap:12px}
+.ev-card{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--faint);
+  padding:13px 15px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.ev-card:hover{box-shadow:0 2px 10px rgba(20,24,29,.07)}
+.ev-card.sel{background:var(--petrol-soft);box-shadow:inset 0 0 0 1px var(--petrol)}
+.ev-num,.ev-date{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.04em}
+.ev-label{font-family:var(--serif);font-size:var(--fs-lg);font-weight:700;line-height:1.35;margin:4px 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-desc{font-size:var(--fs-sm);color:var(--muted);line-height:1.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.news-item{display:block;border-bottom:1px solid var(--rule);padding:16px 2px;text-decoration:none;color:var(--ink);transition:background .15s}
+.news-item:hover{background:var(--surface-2)}
+.news-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--faint);margin-bottom:5px}
+.news-cat{border-radius:2px;padding:1px 7px;font-weight:700;color:#fff;letter-spacing:.02em}
+.news-meta .rg{border:1px solid var(--rule-2);border-radius:2px;padding:0 5px}
+.news-title{font-size:var(--fs-base);font-weight:600;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.news-orig{font-size:var(--fs-xs);color:var(--faint);margin-top:3px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:inline-block;font-family:var(--mono);font-size:var(--fs-xs);font-weight:700;border:1px solid var(--rule-2);
+  border-radius:20px;padding:2px 10px;margin:8px 5px 0 0}
+.chip.u{color:var(--up);border-color:rgba(200,16,46,.32)} .chip.d{color:var(--down);border-color:rgba(22,80,155,.32)}
+
+/* ---------- 푸터 ---------- */
+footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--rule);font-size:var(--fs-xs);color:var(--faint);line-height:1.9}
+
+/* ---------- 등장 모션 ---------- */
+@keyframes rise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+.masthead,.lede,.rail,section,footer{animation:rise .5s cubic-bezier(.22,.7,.3,1) backwards}
+.lede{animation-delay:.05s} .rail{animation-delay:.1s}
+section:nth-of-type(1){animation-delay:.14s} section:nth-of-type(2){animation-delay:.18s}
+section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-delay:.26s}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- 모바일 ---------- */
+@media(max-width:720px){
+  :root{--fs-xs:12.5px; --fs-sm:14px; --fs-base:15.5px; --fs-lg:17px; --sp:15px}
+  .wrap{padding:0 14px 52px}
+  .masthead{padding-top:22px}
+  .mast-title{font-size:24px}
+  .issue{text-align:left}
+  .lede{font-size:18px;padding:20px 0}
+  .rail{grid-auto-flow:row;grid-template-columns:1fr 1fr;grid-auto-columns:auto}
+  .tk{border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+  .tk:nth-child(2n){border-right:0}
+  section{padding:20px 15px;margin-top:12px}
+  h2{font-size:19px}
   .ev-grid{grid-template-columns:1fr}
-  .legend{gap:10px 12px}
-  .news-item{padding:13px 14px}
+  .fbtn{min-height:42px}
+  .chartbox{margin:0 -10px}
 }
-@media(max-width:400px){ .tickerbar{grid-template-columns:1fr} }
+@media(max-width:400px){ .rail{grid-template-columns:1fr} .tk{border-right:0} }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-<header>
-  <div class="hd-top">
+<header class="masthead">
+  <div class="mast-top">
     <div>
-      <h1>TREXI <span>MACRO</span> 관제 대시보드</h1>
-      <div class="hd-sub">반도체 수출(관세청) × 한·미 증시 — 실측 데이터 자동 연동</div>
+      <span class="mast-kicker">Semiconductor Cycle Watch</span>
+      <h1 class="mast-title">트렉시 <em>관측</em></h1>
     </div>
-    <div class="live-badge" id="liveBadge"><span class="dot"></span><span id="liveText">수출 속보 불러오는 중…</span></div>
+    <div class="issue">
+      <div id="liveText">수출 속보 불러오는 중</div>
+      <div id="updatedText">데이터 기준 확인 중</div>
+    </div>
   </div>
-  <div class="updated mono" id="updatedText">데이터 로딩 중</div>
+  <div class="mast-rule"></div><div class="mast-rule-thin"></div>
 </header>
 
-<div class="tickerbar" id="tickerbar"><div class="err" style="padding:8px">대표지표 로딩 중…</div></div>
+<div class="lede">
+  <span class="lede-label">오늘의 판단</span>
+  <div id="lede">데이터를 불러오는 중입니다.</div>
+</div>
 
-<div class="filters" id="rangeFilters">
-  <button class="fbtn on" data-r="all">전체</button>
-  <button class="fbtn" data-r="ytd">YTD</button>
-  <button class="fbtn" data-r="6m">6M</button>
-  <button class="fbtn" data-r="3m">3M</button>
-  <button class="fbtn" data-r="1m">1M</button>
-  <button class="fbtn" data-r="1w">1W</button>
-  <button class="fbtn" data-r="today">Today</button>
+<div class="rail" id="tickerbar"><div class="err" style="padding:16px">대표 지표 불러오는 중</div></div>
+
+<div class="toolbar">
+  <div class="filters" id="rangeFilters">
+    <button class="fbtn on" data-r="all">전체</button>
+    <button class="fbtn" data-r="ytd">YTD</button>
+    <button class="fbtn" data-r="6m">6M</button>
+    <button class="fbtn" data-r="3m">3M</button>
+    <button class="fbtn" data-r="1m">1M</button>
+    <button class="fbtn" data-r="1w">1W</button>
+    <button class="fbtn" data-r="today">Today</button>
+  </div>
 </div>
 
 <section>
-  <div class="fig">FIG. 01</div>
-  <h2 id="t1">KOSPI vs S&amp;P 500 — 정규화 지수</h2>
-  <div class="desc">동일 시점 100 기준 상대 성과 · 상단 핀 = 매크로 이벤트 (클릭 시 전 차트 연동 강조)</div>
+  <div class="sec-head">
+    <span class="fig">FIG. 01 · 지수</span>
+    <h2 id="t1">지수는 지금 어디에 서 있나</h2>
+  </div>
+  <div class="desc">구간 시작 시점을 100으로 맞춘 상대 성과. 위쪽 핀은 매크로 이벤트이고, 누르면 아래 차트들이 함께 표시됩니다.</div>
   <div class="legend" id="lg1"></div>
   <div id="fig1" class="chartbox"></div>
-  <div class="zoomhint">휠/핀치 = 확대 · 드래그 = 이동 · 더블클릭 = 초기화</div>
-  <div class="readout" id="ro1">이벤트 핀 또는 하단 이벤트 카드를 클릭하면 상세가 표시됩니다.</div>
+  <div class="zoomhint">휠·핀치로 확대 · 드래그로 이동 · 더블탭으로 초기화</div>
+  <div class="readout" id="ro1">이벤트 핀이나 아래 이벤트 카드를 누르면 그날의 내용이 여기 표시됩니다.</div>
 </section>
 
 <section>
-  <div class="fig">FIG. 02</div>
-  <h2 id="t2">반도체·빅테크 종목 — 정규화 멀티라인</h2>
-  <div class="desc" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-    <span>범례 클릭으로 종목 표시/숨김</span>
+  <div class="sec-head">
+    <span class="fig">FIG. 02 · 종목</span>
+    <h2 id="t2">누가 지수를 끌었나</h2>
+  </div>
+  <div class="desc row">
+    <span>반도체·빅테크 13종목. 범례를 눌러 원하는 종목만 남길 수 있습니다.</span>
     <span style="display:flex;gap:6px">
       <button class="fbtn" onclick="setAllStocks(true)">전체 표시</button>
-      <button class="fbtn" onclick="setAllStocks(false)">전체 해제</button></span></div>
+      <button class="fbtn" onclick="setAllStocks(false)">전체 해제</button></span>
+  </div>
   <div class="legend" id="lg2"></div>
   <div id="fig2" class="chartbox"></div>
-  <div class="zoomhint">휠/핀치 = 확대 · 드래그 = 이동 · 더블클릭 = 초기화</div>
-  <div class="readout" id="ro2">이벤트 핀 또는 하단 이벤트 카드를 클릭하면 상세가 표시됩니다.</div>
+  <div class="zoomhint">휠·핀치로 확대 · 드래그로 이동 · 더블탭으로 초기화</div>
+  <div class="readout" id="ro2">이벤트 핀이나 아래 이벤트 카드를 누르면 그날의 내용이 여기 표시됩니다.</div>
 </section>
 
 <section>
-  <div class="fig">FIG. 03</div>
-  <h2>반도체 수출 vs 주가 — 업황 선행지표 크로스</h2>
-  <div class="desc">막대 = 월별 반도체 수출(억$, 관세청 발표 기준) · 골드 라인 = 메모리(HS854232) · 우측 = 삼성전자·SK하이닉스 정규화 주가</div>
+  <div class="sec-head">
+    <span class="fig">FIG. 03 · 수출 × 주가</span>
+    <h2 id="t3">수출과 주가는 같이 가고 있나</h2>
+  </div>
+  <div class="desc">막대는 월별 반도체 수출액(관세청 발표 기준), 금색 선은 메모리(HS854232), 오른쪽 축의 점선은 삼성전자·SK하이닉스 주가입니다.</div>
   <div class="legend" id="lg3"></div>
   <div id="fig3" class="chartbox"></div>
-  <div class="readout" id="ro3" style="display:none"></div>
 </section>
 
 <section>
-  <div class="fig">FIG. 05</div>
-  <h2>DRAM·NAND 가격 추이 <span style="font-size:12px;color:var(--tx3);font-weight:400">— 월별 고정거래가 (TrendForce/DRAMeXchange 공개 기준)</span></h2>
-  <div class="desc">계약가는 월 단위·스팟은 일 단위 고시라 실시간 개념이 없습니다 · 좌축 = DDR4 8Gb·NAND 128Gb($) · 우축 = 모듈($)</div>
+  <div class="sec-head">
+    <span class="fig">FIG. 05 · 가격</span>
+    <h2 id="t5">메모리 가격은 어디쯤인가</h2>
+  </div>
+  <div class="desc">월별 고정거래가 기준(TrendForce·D램익스체인지 공개 자료). 계약가는 월 단위, 스팟은 일 단위로 고시되어 실시간 시세가 아닙니다.</div>
   <div class="legend" id="lg5"></div>
   <div id="fig5" class="chartbox"></div>
-  <div class="readout" id="ro5">데이터 로딩 중…</div>
+  <div class="readout" id="ro5" style="white-space:normal">가격 데이터를 불러오는 중입니다.</div>
 </section>
 
 <section id="evtSection">
-  <div class="fig">FIG. 04</div>
-  <h2 id="t4">매크로 이벤트 · 실시간 뉴스</h2>
-  <div class="filters" style="margin:8px 0 12px">
-    <button class="fbtn on" id="tabEvt" onclick="setTab('evt')">📌 변곡점 이벤트</button>
-    <button class="fbtn" id="tabNews" onclick="setTab('news')">🔥 실시간 뉴스</button>
+  <div class="sec-head">
+    <span class="fig">FIG. 04 · 기록</span>
+    <h2>무슨 일이 있었나</h2>
+  </div>
+  <div class="tabs">
+    <button class="fbtn on" id="tabEvt" onclick="setTab('evt')">변곡점 기록</button>
+    <button class="fbtn" id="tabNews" onclick="setTab('news')">실시간 뉴스</button>
   </div>
   <div id="paneEvt">
-    <div class="desc">최신순 · 클릭 시 FIG.01~03 연동 강조</div>
+    <div class="desc row" style="margin-bottom:12px">
+      <span>최신순. 카드를 누르면 위 차트에서 그 시점이 강조됩니다.</span>
+      <button class="fbtn" onclick="loadEvents(true)">지금 새로 받기</button></div>
     <div class="ev-filters" id="evFilters"></div>
     <div class="ev-grid" id="evGrid"></div>
   </div>
   <div id="paneNews" style="display:none">
-    <div class="desc" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-      <span>국내·해외 버즈 상위 중 주식 관련만 자동 필터 · 탭하면 원문</span>
-      <button class="fbtn" onclick="loadNews(true)">🔄 지금 업데이트</button></div>
-    <div class="filters" id="newsSort" style="margin:0 0 8px">
-      <button class="fbtn on" onclick="setNewsSort('score')">🔥 버즈순</button>
-      <button class="fbtn" onclick="setNewsSort('time')">🕐 최신순</button>
+    <div class="desc row" style="margin-bottom:12px">
+      <span>국내·해외 기사 중 시장과 직접 관련된 것만 자동으로 골라냅니다. 해외 기사는 한국어로 옮깁니다.</span>
+      <button class="fbtn" onclick="loadNews(true)">지금 새로 받기</button></div>
+    <div class="filters" id="newsSort" style="margin-bottom:10px">
+      <button class="fbtn on" onclick="setNewsSort('score')">많이 다뤄진 순</button>
+      <button class="fbtn" onclick="setNewsSort('time')">최신순</button>
     </div>
     <div class="ev-filters" id="newsCats"></div>
-    <div id="newsList"><div class="err">뉴스 불러오는 중…</div></div>
+    <div id="newsList"><div class="err">뉴스를 불러오는 중입니다.</div></div>
   </div>
 </section>
 
 <footer>
-  데이터: 관세청 수출입통계(10일 단위·품목별) · Yahoo Finance 월봉/일봉 · 6시간 캐시 자동 갱신<br>
-  본 자료는 시장 회고용 정보 시각화이며 투자 권유가 아닙니다. Trexi Co., Ltd. 내부 분석용.<br>
-  <span class="mono">Built by Trexi · Powered by Claude</span>
+  자료 — 관세청 수출입통계(10일 단위·품목별) · Yahoo Finance · TrendForce/D램익스체인지 공개 자료 · Google News<br>
+  시장 회고와 내부 판단을 돕기 위한 자료이며 투자 권유가 아닙니다. 수치는 출처 기준이 서로 다를 수 있어 각 항목에 기준을 함께 적었습니다.<br>
+  <span class="mono">Trexi Co., Ltd. · Built with Claude</span>
 </footer>
 
 </div>
 
 <script>
+
 const API_NEWS_TYPE = 'news';
 const API = 'https://script.google.com/macros/s/AKfycbwpnp_BrcFQaWazju8fGAS6wC82RXZpWWfTy9uzYbqXmJfCiNP4cVg9MLNQ646uuaa3/exec?key=trexi2026&type=all';
 
@@ -264,7 +294,7 @@ const EXPORT_FALLBACK = {"updated":"2026-07-16 (내장 폴백)","semiconMonthly"
 
 const CATS = { tech:{label:'기술/사이클',c:'#A87A12'}, trade:{label:'무역/관세',c:'#B06E0F'},
   money:{label:'통화/신용',c:'#2E6FB5'}, policy:{label:'정책/수급',c:'#1F7E54'}, geo:{label:'지정학',c:'#B5303F'}, earn:{label:'기업 실적',c:'#0E7A87'} };
-const EVENTS = [
+let EVENTS = [
   {date:'2025-01-27',num:'01',cat:'tech',c:'#6B4DC0',label:'DeepSeek 충격',desc:'AI 인프라 투자 회의론 확산, 빅테크 일제히 급락'},
   {date:'2025-04-02',num:'02',cat:'trade',c:'#B06E0F',label:'해방의 날 관세',desc:'한국 25%·일본 24%·EU 20% 상호관세 발표'},
   {date:'2025-04-09',num:'03',cat:'trade',c:'#B06E0F',label:'90일 관세 유예',desc:'S&P +9.52%, NASDAQ +12.16% 폭등'},
@@ -293,7 +323,7 @@ let RANGE = 'all';
 let stockOn = {};
 let evCat = 'all';
 let selEvt = null;              // 선택된 이벤트 num
-const MOB = window.innerWidth < 700;
+let MOB = window.innerWidth < 700;
 let ZOOM = { fig1:{s:0,e:1}, fig2:{s:0,e:1}, fig3:{s:0,e:1}, fig5:{s:0,e:1} }; // 차트별 독립 줌
 
 const $ = id => document.getElementById(id);
@@ -547,11 +577,24 @@ function renderEvents(){
   $('evGrid').innerHTML = list.map(e=>
     `<div class="ev-card ${selEvt===e.num?'sel':''}" style="border-left-color:${e.c}" onclick="pickEvent('${e.num}')">
       <div style="display:flex;justify-content:space-between"><span class="ev-num">EVT.${e.num}</span><span class="ev-date">${e.date}</span></div>
-      <div class="ev-label">${e.label}</div><div class="ev-desc">${e.desc}</div>
+      <div class="ev-label" title="${e.label}">${e.label}</div><div class="ev-desc" title="${e.desc}">${e.desc}</div>
     </div>`).join('');
 }
 
 let NEWS = null, TAB = 'evt';
+let EVT_SRC = '내장';
+async function loadEvents(force){
+  try{
+    const r = await fetch(API.replace('type=all','type=events') + (force?'&nocache=1':''));
+    const j = await r.json();
+    if(j && j.items && j.items.length){
+      EVENTS = j.items.map(e=>({ date:e.date, num:e.num, cat:e.cat,
+        c:(CATS[e.cat]||CATS.tech).c, label:e.label, desc:e.desc }));
+      EVT_SRC = (j.source==='sheet' ? '시트 연동 · ' + j.updated + ' 기준' : '내장 기본값');
+      selEvt = null; renderEvents(); renderAll();
+    }
+  }catch(e){ /* 실패 시 내장 EVENTS 유지 */ }
+}
 function setTab(t){
   TAB = t;
   document.getElementById('tabEvt').classList.toggle('on', t==='evt');
@@ -600,8 +643,8 @@ function renderNews(){
       <div class="news-meta"><span class="news-cat" style="background:${col}">${n.catLabel||''}</span>
         <span class="rg">${n.region==='KR'?'국내':'해외'}</span><span>${n.time}</span><span>${n.source}</span>
         ${n.dup>1?`<span style="color:#C52A46">🔥${n.dup}건</span>`:''}</div>
-      <div class="news-title">${n.title}</div>
-      ${n.titleEn?`<div class="news-orig">원문: ${n.titleEn}</div>`:''}
+      <div class="news-title" title="${n.title}">${n.title}</div>
+      ${n.titleEn?`<div class="news-orig" title="${n.titleEn}">원문: ${n.titleEn}</div>`:''}
       ${chips}</a>`;
   }).join('') +
   `<div class="zoomhint">해외 기사 자동 한국어 번역 · 버즈순 = 중복 보도수·키워드 관련도 기준 · ${NEWS.updated} 수집</div>`;
@@ -728,6 +771,47 @@ function attachZoom(id){
 }
 
 // ---------- 배지/로드 ----------
+function composeLede(){
+  const el = document.getElementById('lede');
+  if(!el) return;
+  const num = (v,d=1)=>`<b class="lede-n">${fmt(v,d)}</b>`;
+  const pct = v=>`<b class="lede-n ${v>=0?'up':'down'}">${v>=0?'+':''}${fmt(v)}%</b>`;
+  const s = [];
+  const l = DATA.export && DATA.export.latest;
+  if(l){
+    let t = `반도체 수출 <b class="lede-n">${l.period}</b> ${num(l.semiEok)}억 달러`;
+    if(l.yoy!=null) t += `, 전년 같은 기간보다 ${pct(l.yoy)}`;
+    if(l.mom!=null) t += ` · 전월 같은 순 대비 ${pct(l.mom)}`;
+    s.push(t + ' <span class="lede-tag">잠정</span>');
+  } else s.push('수출 속보 확인 중입니다.');
+  const mm = DATA.export && DATA.export.semiconMonthly;
+  if(mm && mm.length){
+    const last = mm[mm.length-1];
+    s.push(`가장 최근 확정치는 ${last.ym.slice(0,4)}년 ${Number(last.ym.slice(5))}월 ${num(last.eok)}억 달러.`);
+  }
+  const ki = DATA.stocks && DATA.stocks.dailyIndices && DATA.stocks.dailyIndices.KOSPI;
+  if(ki && ki.length>1){
+    const c=(ki[ki.length-1].close/ki[ki.length-2].close-1)*100;
+    s.push(`코스피는 직전 거래일 대비 ${pct(c)} ${num(ki[ki.length-1].close,2)}.`);
+  }
+  el.innerHTML = s.join(' ');
+}
+function fitLede(){
+  const el = document.getElementById('lede');
+  if(!el) return;
+  const max = MOB ? 17 : 20, min = MOB ? 12.5 : 13.5;
+  el.style.whiteSpace = 'nowrap';
+  let size = max;
+  el.style.fontSize = size + 'px';
+  let guard = 0;
+  while(size > min && el.scrollWidth > el.clientWidth && guard++ < 80){
+    size -= 0.5; el.style.fontSize = size + 'px';
+  }
+  if(el.scrollWidth > el.clientWidth){   // 한 줄이 불가능한 폭이면 여러 줄로 전환
+    el.style.whiteSpace = 'normal';
+    el.style.fontSize = min + 'px';
+  }
+}
 function applyLatestBadge(){
   const l = DATA.export && DATA.export.latest;
   if(l){
@@ -750,11 +834,23 @@ function applyLatestBadge(){
     DATA.stocks = null;
   }
   applyLatestBadge();
+  composeLede();
+  fitLede();
   renderAll();
   loadTickerbar();
   loadDram();
+  loadEvents();
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitLede);
   attachZoom('fig5');
+  let rz; window.addEventListener('resize', ()=>{
+    clearTimeout(rz); rz = setTimeout(()=>{
+      const m = window.innerWidth < 700;
+      if(m !== MOB){ MOB = m; renderAll(); renderDram(); }
+      fitLede();
+    }, 200);
+  });
 })();
+
 </script>
 </body>
 </html>
