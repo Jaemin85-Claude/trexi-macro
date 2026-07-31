@@ -126,6 +126,33 @@ footer{color:var(--tx3);font-size:11.5px;line-height:1.8;margin-top:8px}
 .news-title{font-size:14.5px}
   .snap .pr{font-size:17px}
 }
+
+/* ===== v2.7 타이포 스케일 통일 & 모바일 최적화 ===== */
+:root{ --fs-xs:12px; --fs-sm:13px; --fs-base:14px; --fs-lg:17px; --fs-xl:20px; }
+body{font-size:var(--fs-base)}
+h1{font-size:var(--fs-xl)} h2{font-size:var(--fs-lg)}
+.fig,.ev-num,.ev-date,.chip,.tk .hi,.zoomhint,.updated{font-size:var(--fs-xs)}
+.hd-sub,.desc,.legend,.readout,.ev-desc,.news-meta,.news-orig,.tk .nm,.tk .chg,.fbtn,.snap .nm,.snap .chg{font-size:var(--fs-sm)}
+.ev-label,.news-title{font-size:var(--fs-base)}
+.tk .val,.snap .pr{font-size:var(--fs-lg)}
+/* 차트 내부 글자 — SVG는 뷰박스 축소 비율만큼 작아지므로 모바일에서 크게 */
+svg .axis{font-size:15px}
+svg.mob .axis{font-size:27px}
+@media(max-width:700px){
+  :root{ --fs-xs:12.5px; --fs-sm:13.5px; --fs-base:15px; --fs-lg:17px; --fs-xl:19px; }
+  .wrap{padding:14px 12px 40px}
+  section{padding:16px 14px;margin-bottom:16px}
+  .live-badge{width:100%}
+  .updated{word-break:keep-all}
+  .tickerbar{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;overflow:visible;padding-bottom:10px}
+  .tk{min-width:0}
+  .filters,.ev-filters{gap:6px}
+  .fbtn{padding:10px 13px}
+  .ev-grid{grid-template-columns:1fr}
+  .legend{gap:10px 12px}
+  .news-item{padding:13px 14px}
+}
+@media(max-width:400px){ .tickerbar{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -185,6 +212,15 @@ footer{color:var(--tx3);font-size:11.5px;line-height:1.8;margin-top:8px}
   <div class="legend" id="lg3"></div>
   <div id="fig3" class="chartbox"></div>
   <div class="readout" id="ro3" style="display:none"></div>
+</section>
+
+<section>
+  <div class="fig">FIG. 05</div>
+  <h2>DRAM·NAND 가격 추이 <span style="font-size:12px;color:var(--tx3);font-weight:400">— 월별 고정거래가 (TrendForce/DRAMeXchange 공개 기준)</span></h2>
+  <div class="desc">계약가는 월 단위·스팟은 일 단위 고시라 실시간 개념이 없습니다 · 좌축 = DDR4 8Gb·NAND 128Gb($) · 우축 = 모듈($)</div>
+  <div class="legend" id="lg5"></div>
+  <div id="fig5" class="chartbox"></div>
+  <div class="readout" id="ro5">데이터 로딩 중…</div>
 </section>
 
 <section id="evtSection">
@@ -257,7 +293,8 @@ let RANGE = 'all';
 let stockOn = {};
 let evCat = 'all';
 let selEvt = null;              // 선택된 이벤트 num
-let ZOOM = { fig1:{s:0,e:1}, fig2:{s:0,e:1}, fig3:{s:0,e:1} }; // 차트별 독립 줌
+const MOB = window.innerWidth < 700;
+let ZOOM = { fig1:{s:0,e:1}, fig2:{s:0,e:1}, fig3:{s:0,e:1}, fig5:{s:0,e:1} }; // 차트별 독립 줌
 
 const $ = id => document.getElementById(id);
 const isDaily = () => RANGE === '1m' || RANGE === '1w';
@@ -294,7 +331,7 @@ function keyLabel(k){ return k.length===7 ? k.slice(2).replace('-','.') : k.slic
 function drawLineChart(elId, seriesList, keys, opts={}){
   const el = $(elId);
   if(!seriesList.length || !keys.length){ el.innerHTML = '<div class="err">'+(opts.errMsg||'데이터 연결 실패 — 새로고침 시 재시도합니다')+'</div>'; return; }
-  const W=980, H=opts.h||400, L=64, R=opts.rAxis?68:18, T=52, B=42;
+  const W=980, H=(opts.h||400)+(MOB?60:0), L=MOB?92:64, R=opts.rAxis?(MOB?96:68):18, T=MOB?66:52, B=MOB?62:42;
   let mn=Infinity, mx=-Infinity;
   seriesList.forEach(s=>s.data.forEach(p=>{ if(p.v<mn)mn=p.v; if(p.v>mx)mx=p.v; }));
   if(opts.bars) opts.bars.data.forEach(p=>{ if(p.v<mn)mn=p.v; if(p.v>mx)mx=p.v; });
@@ -303,13 +340,13 @@ function drawLineChart(elId, seriesList, keys, opts={}){
   const pad=(mx-mn)*0.08||1; if(!opts.bars) mn-=pad; mx+=pad;
   const x = i => L + (keys.length===1?(W-L-R)/2:(W-L-R)*i/(keys.length-1));
   const y = v => T + (H-T-B)*(1-(v-mn)/(mx-mn));
-  let g = `<svg viewBox="0 0 ${W} ${H}">`;
+  let g = `<svg class="${MOB?'mob':''}" viewBox="0 0 ${W} ${H}">`;
   for(let k2=0;k2<=4;k2++){
     const vv = mn + (mx-mn)*k2/4, yy = y(vv);
     g += `<line class="gline" x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}"/>`;
     g += `<text class="axis" x="${L-8}" y="${yy+4}" text-anchor="end">${fmt(vv,0)}</text>`;
   }
-  const step = Math.max(1, Math.ceil(keys.length/8));
+  const step = Math.max(1, Math.ceil(keys.length/(MOB?4:8)));
   keys.forEach((m,i)=>{ if(i%step===0||i===keys.length-1)
     g += `<text class="axis" x="${x(i)}" y="${H-12}" text-anchor="middle">${keyLabel(m)}</text>`; });
   // 선택 이벤트 하이라이트 밴드
@@ -350,9 +387,9 @@ function drawLineChart(elId, seriesList, keys, opts={}){
     if(!s.data.length) return;
     const pts = s.data.map(p=>{const xi=keys.indexOf(p.k);return xi<0?null:`${x(xi)},${y(p.v)}`;}).filter(Boolean).join(' ');
     if(!pts) return;
-    g += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="3.4" stroke-dasharray="${s.dash||''}"/>`;
+    g += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="${MOB?5:3.4}" stroke-dasharray="${s.dash||''}"/>`;
     const lp = s.data[s.data.length-1], lxi = keys.indexOf(lp.k);
-    if(lxi>=0) g += `<circle cx="${x(lxi)}" cy="${y(lp.v)}" r="4.5" fill="${s.color}"/>`;
+    if(lxi>=0) g += `<circle cx="${x(lxi)}" cy="${y(lp.v)}" r="${MOB?7:4.5}" fill="${s.color}"/>`;
   });
   // 이벤트 핀 (확대)
   if(opts.pins){
@@ -362,8 +399,8 @@ function drawLineChart(elId, seriesList, keys, opts={}){
       const sel = selEvt===ev.num;
       g += `<line x1="${px}" y1="${T-6}" x2="${px}" y2="${H-B}" stroke="${ev.c}" stroke-width="${sel?2:1}" opacity=".4"/>`;
       g += `<g class="pin" onclick="pickEvent('${ev.num}')">`+
-           `<circle cx="${px}" cy="${T-24}" r="${sel?16:13}" fill="${ev.c}"${sel?' stroke="var(--hl)" stroke-width="3"':''}/>`+
-           `<text x="${px}" y="${T-19}" text-anchor="middle" font-size="12" font-family="IBM Plex Mono" fill="#FFFFFF" font-weight="700">${ev.num}</text></g>`;
+           `<circle cx="${px}" cy="${MOB?T-30:T-24}" r="${MOB?(sel?26:22):(sel?16:13)}" fill="${ev.c}"${sel?' stroke="var(--hl)" stroke-width="3"':''}/>`+
+           `<text x="${px}" y="${MOB?T-24:T-19}" text-anchor="middle" font-size="${MOB?20:12}" font-family="IBM Plex Mono" fill="#FFFFFF" font-weight="700">${ev.num}</text></g>`;
     });
   }
   g += '</svg>';
@@ -569,6 +606,32 @@ function renderNews(){
   }).join('') +
   `<div class="zoomhint">해외 기사 자동 한국어 번역 · 버즈순 = 중복 보도수·키워드 관련도 기준 · ${NEWS.updated} 수집</div>`;
 }
+let DRAM = null;
+async function loadDram(){
+  try{
+    const r = await fetch(API.replace('type=all','type=dram'));
+    DRAM = await r.json(); renderDram();
+  }catch(e){ document.getElementById('fig5').innerHTML='<div class="err">DRAM 데이터 연결 실패</div>'; }
+}
+function renderDram(){
+  if(!DRAM || !DRAM.seed){ return; }
+  const S = DRAM.seed.series;
+  // X축 = 시딩 전체 월 합집합
+  const yms = [...new Set(S.flatMap(s=>s.points.map(p=>p.ym)))].sort();
+  const cmap = {exp:'var(--exp)',mem:'var(--mem)',kospi:'var(--kospi)',hynix:'var(--hynix)'};
+  const left = S.slice(0,2), right = S.slice(2);
+  document.getElementById('lg5').innerHTML = S.map((s,i)=>
+    `<span class="lg"><span class="sw" style="background:${cmap[s.color]}"></span>${s.id}${i>1?'(우)':''} ${s.points.length?('<b>$'+s.points[s.points.length-1].v+'</b>'):''}</span>`).join('');
+  drawLineChart('fig5',
+    left.map(s=>({data:s.points.map(p=>({k:p.ym,v:p.v})),color:cmap[s.color]})),
+    yms,
+    { rSeries: right.map(s=>({data:s.points.map(p=>({k:p.ym,v:p.v})),color:cmap[s.color],dash:'6 5'})),
+      rAxis:true, h:400 });
+  const dn = DRAM.daily && DRAM.daily.length;
+  document.getElementById('ro5').innerHTML =
+    (DRAM.seed.outlook||[]).map(o=>'· '+o).join('<br>') +
+    `<br><span style="color:var(--tx3)">${DRAM.seed.note} · *표시는 보도상 범위·역산값 · 시트 일별 누적 ${dn?dn+'건 반영':'대기 중'}</span>`;
+}
 function toggleStock(n){ stockOn[n]=!stockOn[n]; renderAll(); }
 function setAllStocks(on){ Object.keys(stockOn).forEach(n=>stockOn[n]=on); renderAll(); }
 async function loadTickerbar(){
@@ -689,6 +752,8 @@ function applyLatestBadge(){
   applyLatestBadge();
   renderAll();
   loadTickerbar();
+  loadDram();
+  attachZoom('fig5');
 })();
 </script>
 </body>
