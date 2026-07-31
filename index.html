@@ -25,6 +25,8 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;overflow-x:hidden}
 body{overflow-x:hidden}
+.wrap>*{max-width:100%}
+svg,img{max-width:100%}
 body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:var(--fs-base);line-height:1.65;
   font-feature-settings:'tnum' 1}
 .mono{font-family:var(--mono)}
@@ -64,7 +66,9 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:
 
 /* ---------- 기간 필터 (sticky) ---------- */
 .tb-row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.fbtn.refresh{border-color:var(--petrol);color:var(--petrol)}
+.fbtn.refresh,.fbtn.mini{border-color:var(--petrol);color:var(--petrol)}
+.fbtn.mini{margin-left:auto;flex:0 0 auto}
+.fbtn.mini:disabled,.fbtn.refresh:disabled{opacity:.55;cursor:default}
 .fbtn.refresh:disabled{opacity:.55;cursor:default}
 .fbtn.refresh::before{content:'↻';margin-right:5px;font-size:14px}
 .toolbar{position:sticky;top:0;z-index:20;background:rgba(251,250,247,.94);backdrop-filter:blur(8px);
@@ -110,7 +114,7 @@ svg.mob .axis{font-size:27px}
 
 /* ---------- Today 스냅샷 ---------- */
 .snap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule)}
-.snap{background:var(--surface);padding:13px 15px}
+.snap{background:var(--surface);padding:13px 15px;min-width:0;overflow:hidden}
 .snap .nm{font-size:var(--fs-xs);color:var(--muted)}
 .snap .pr{font-family:var(--mono);font-size:var(--fs-lg);font-weight:700;margin-top:1px}
 .snap .chg{font-family:var(--mono);font-size:var(--fs-sm);font-weight:600}
@@ -122,16 +126,19 @@ svg.mob .axis{font-size:27px}
 .ev-filters{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:12px;
   scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
 .ev-filters::-webkit-scrollbar{display:none}
+.ev-filters{-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 22px),transparent 100%);
+  mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 22px),transparent 100%)}
 .ev-filters .fbtn{flex:0 0 auto;white-space:nowrap;padding:7px 12px}
 .ev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(242px,1fr));gap:12px}
-.ev-card{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--faint);
+.ev-grid > *{min-width:0}
+.ev-card{min-width:0;overflow:hidden;background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--faint);
   padding:13px 15px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .ev-card:hover{box-shadow:0 2px 10px rgba(20,24,29,.07)}
 .ev-card.sel{background:var(--petrol-soft);box-shadow:inset 0 0 0 1px var(--petrol)}
 .ev-num,.ev-date{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.04em}
 .ev-label{font-family:var(--serif);font-size:var(--fs-lg);font-weight:700;line-height:1.35;margin:4px 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev-desc{font-size:var(--fs-sm);color:var(--muted);line-height:1.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.news-item{display:block;border-bottom:1px solid var(--rule);padding:16px 2px;color:var(--ink);cursor:pointer;transition:background .15s}
+.news-item{display:block;min-width:0;overflow:hidden;border-bottom:1px solid var(--rule);padding:16px 2px;color:var(--ink);cursor:pointer;transition:background .15s}
 .art{margin-top:12px;padding:14px 15px;background:var(--surface-2);border-left:3px solid var(--petrol);cursor:default}
 .art-text{font-size:var(--fs-sm);line-height:1.8;color:var(--ink);white-space:normal;
   display:-webkit-box;-webkit-line-clamp:12;-webkit-box-orient:vertical;overflow:hidden}
@@ -164,18 +171,21 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
 
 /* ---------- 모바일 ---------- */
 @media(max-width:720px){
-  :root{--fs-xs:12.5px; --fs-sm:14px; --fs-base:15.5px; --fs-lg:17px; --sp:15px}
+  :root{--fs-xs:11.5px; --fs-sm:12.5px; --fs-base:14px; --fs-lg:15.5px; --sp:13px}
   .wrap{padding:0 14px 52px}
   .masthead{padding-top:22px}
-  .mast-title{font-size:24px}
+  .mast-title{font-size:22px}
   .issue{text-align:left}
-  .lede{font-size:18px;padding:20px 0}
+  .lede{font-size:16.5px;padding:18px 0}
   .tk{padding:8px 10px}
   .tk .val{font-size:14px}
-  section{padding:20px 15px;margin-top:12px}
-  h2{font-size:19px}
-  .ev-grid{grid-template-columns:1fr}
-  .fbtn{min-height:42px}
+  section{padding:17px 13px;margin-top:11px}
+  h2{font-size:17.5px}
+  .ev-grid{grid-template-columns:minmax(0,1fr);gap:9px}
+  .fbtn{min-height:38px;padding:8px 11px}
+  .ev-card{padding:11px 13px}
+  .news-item{padding:13px 2px}
+  .sec-head{padding-left:10px;margin-bottom:12px}
 }
 @media(max-width:390px){ .rail{grid-template-columns:repeat(2,1fr)} .tk:nth-child(3n){border-right:1px solid var(--rule)} .tk:nth-child(2n){border-right:0} .tk:nth-child(n+4){border-bottom:1px solid var(--rule)} .tk:nth-child(n+5){border-bottom:0} }
 </style>
@@ -294,6 +304,7 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
       <button class="fbtn on" onclick="setNewsRegion('all')">전체</button>
       <button class="fbtn" onclick="setNewsRegion('KR')">국내</button>
       <button class="fbtn" onclick="setNewsRegion('GLOBAL')">해외</button>
+      <button class="fbtn mini" id="btnNews" onclick="loadNews(true)" title="뉴스만 다시 받기">↻ 뉴스</button>
     </div>
     <div class="ev-filters" id="newsCats"></div>
     <div id="newsList"><div class="err">뉴스를 불러오는 중입니다.</div></div>
@@ -645,14 +656,23 @@ function setTab(t){
   document.getElementById('paneNews').style.display = t==='news' ? '' : 'none';
   if(t==='news' && !NEWS) loadNews();
 }
+let newsLoading = false;
 async function loadNews(force){
-  document.getElementById('newsList').innerHTML = '<div class="err">뉴스 불러오는 중…</div>';
+  if(newsLoading) return;
+  newsLoading = true;
+  const nb = document.getElementById('btnNews');
+  if(nb){ nb.textContent = '받는 중'; nb.disabled = true; }
+  document.getElementById('newsList').innerHTML = '<div class="err">기사를 모으는 중입니다. 20초 정도 걸립니다.</div>';
   try{
     const r = await fetch(API.replace('type=all','type=news') + (force ? '&nocache=1' : ''));
     NEWS = await r.json();
     renderNews();
   }catch(e){
-    document.getElementById('newsList').innerHTML = '<div class="err">뉴스 연결 실패 — 새로고침 시 재시도</div>';
+    document.getElementById('newsList').innerHTML = '<div class="err">뉴스를 받지 못했습니다. 다시 눌러 주세요.</div>';
+  }finally{
+    newsLoading = false;
+    const b = document.getElementById('btnNews');
+    if(b){ b.textContent = '↻ 뉴스'; b.disabled = false; }
   }
 }
 const NEWS_CAT_COLOR = {chip:'#0E7A55',cn:'#B5303F',earn:'#0E7A87',macro:'#2E6FB5',trade:'#A87A12',geo:'#6B4DC0',market:'#C52A46',etc:'#8B96A2'};
