@@ -63,6 +63,10 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:
 .up{color:var(--up)} .down{color:var(--down)}
 
 /* ---------- 기간 필터 (sticky) ---------- */
+.tb-row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.fbtn.refresh{border-color:var(--petrol);color:var(--petrol)}
+.fbtn.refresh:disabled{opacity:.55;cursor:default}
+.fbtn.refresh::before{content:'↻';margin-right:5px;font-size:14px}
 .toolbar{position:sticky;top:0;z-index:20;background:rgba(251,250,247,.94);backdrop-filter:blur(8px);
   border-bottom:1px solid var(--rule);padding:11px 0;margin-bottom:6px}
 .filters{display:flex;gap:6px;flex-wrap:wrap}
@@ -115,7 +119,10 @@ svg.mob .axis{font-size:27px}
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);margin:4px 0 16px}
 .tabs .fbtn{border:0;border-bottom:2px solid transparent;border-radius:0;padding:10px 16px;background:none;color:var(--faint)}
 .tabs .fbtn.on{background:none;color:var(--ink);border-bottom-color:var(--petrol)}
-.ev-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.ev-filters{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:12px;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+.ev-filters::-webkit-scrollbar{display:none}
+.ev-filters .fbtn{flex:0 0 auto;white-space:nowrap;padding:7px 12px}
 .ev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(242px,1fr));gap:12px}
 .ev-card{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--faint);
   padding:13px 15px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
@@ -124,7 +131,13 @@ svg.mob .axis{font-size:27px}
 .ev-num,.ev-date{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.04em}
 .ev-label{font-family:var(--serif);font-size:var(--fs-lg);font-weight:700;line-height:1.35;margin:4px 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev-desc{font-size:var(--fs-sm);color:var(--muted);line-height:1.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.news-item{display:block;border-bottom:1px solid var(--rule);padding:16px 2px;text-decoration:none;color:var(--ink);transition:background .15s}
+.news-item{display:block;border-bottom:1px solid var(--rule);padding:16px 2px;color:var(--ink);cursor:pointer;transition:background .15s}
+.art{margin-top:12px;padding:14px 15px;background:var(--surface-2);border-left:3px solid var(--petrol);cursor:default}
+.art-text{font-size:var(--fs-sm);line-height:1.8;color:var(--ink);white-space:normal;
+  display:-webkit-box;-webkit-line-clamp:12;-webkit-box-orient:vertical;overflow:hidden}
+.art-msg{font-size:var(--fs-sm);color:var(--muted)}
+.art-link{display:inline-block;margin-top:10px;font-size:var(--fs-sm);font-weight:600;color:var(--petrol);text-decoration:none}
+.art-link:hover{text-decoration:underline}
 .news-item:hover{background:var(--surface-2)}
 .news-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--faint);margin-bottom:5px}
 .news-cat{border-radius:2px;padding:1px 7px;font-weight:700;color:#fff;letter-spacing:.02em}
@@ -192,6 +205,7 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
 <div class="rail" id="tickerbar"><div class="err" style="padding:16px">대표 지표 불러오는 중</div></div>
 
 <div class="toolbar">
+ <div class="tb-row">
   <div class="filters" id="rangeFilters">
     <button class="fbtn on" data-r="all">전체</button>
     <button class="fbtn" data-r="ytd">YTD</button>
@@ -201,6 +215,8 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
     <button class="fbtn" data-r="1w">1W</button>
     <button class="fbtn" data-r="today">Today</button>
   </div>
+  <button class="fbtn refresh" id="btnRefresh" onclick="refreshAll()">새로 받기</button>
+ </div>
 </div>
 
 <section>
@@ -264,18 +280,20 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
   </div>
   <div id="paneEvt">
     <div class="desc row" style="margin-bottom:12px">
-      <span>최신순. 카드를 누르면 위 차트에서 그 시점이 강조됩니다.</span>
-      <button class="fbtn" onclick="loadEvents(true)">지금 새로 받기</button></div>
+      <span>최신순. 카드를 누르면 위 차트에서 그 시점이 강조됩니다.</span></div>
     <div class="ev-filters" id="evFilters"></div>
     <div class="ev-grid" id="evGrid"></div>
   </div>
   <div id="paneNews" style="display:none">
     <div class="desc row" style="margin-bottom:12px">
-      <span>국내·해외 기사 중 시장과 직접 관련된 것만 자동으로 골라냅니다. 해외 기사는 한국어로 옮깁니다.</span>
-      <button class="fbtn" onclick="loadNews(true)">지금 새로 받기</button></div>
-    <div class="filters" id="newsSort" style="margin-bottom:10px">
+      <span>국내·해외 기사 중 시장과 직접 관련된 것만 자동으로 골라냅니다. 제목을 누르면 본문이 아래로 펼쳐집니다.</span></div>
+    <div class="ev-filters" id="newsSort">
       <button class="fbtn on" onclick="setNewsSort('score')">많이 다뤄진 순</button>
       <button class="fbtn" onclick="setNewsSort('time')">최신순</button>
+      <span style="width:1px;background:var(--rule-2);flex:0 0 auto;margin:2px 5px"></span>
+      <button class="fbtn on" onclick="setNewsRegion('all')">전체</button>
+      <button class="fbtn" onclick="setNewsRegion('KR')">국내</button>
+      <button class="fbtn" onclick="setNewsRegion('GLOBAL')">해외</button>
     </div>
     <div class="ev-filters" id="newsCats"></div>
     <div id="newsList"><div class="err">뉴스를 불러오는 중입니다.</div></div>
@@ -336,7 +354,7 @@ let DATA = { export: null, stocks: null };
 let RANGE = 'all';
 let stockOn = {};
 let evCat = 'all';
-let selEvt = null;              // 선택된 이벤트 num
+let selEvt = null, evShown = 5;              // 선택된 이벤트 num
 let MOB = window.innerWidth < 700;
 let ZOOM = { fig1:{s:0,e:1}, fig2:{s:0,e:1}, fig3:{s:0,e:1}, fig5:{s:0,e:1} }; // 차트별 독립 줌
 
@@ -549,11 +567,15 @@ function renderFig3(){
         {data:normalize(cut(sf(st['삼성전자'],'close','ym'))),color:PAL.samsung,dash:'6 5',op:.9},
         {data:normalize(cut(sf(st['SK하이닉스'],'close','ym'))),color:PAL.hynix,dash:'6 5',op:.9},
       ];
-      lgX = `<span class="lg">${swHtml(PAL.samsung,true)}삼성전자 <em>우축</em></span>
-        <span class="lg">${swHtml(PAL.hynix,true)}SK하이닉스 <em>우축</em></span>`;
+      const px = n => { const a = st[n].filter(p=>keys.includes(p.ym)); return a.length ? a[a.length-1].close : null; };
+      const p1 = px('삼성전자'), p2 = px('SK하이닉스');
+      lgX = `<span class="lg">${swHtml(PAL.samsung,true)}삼성전자${p1!=null?` <b>${fmt(p1,0)}원</b>`:''} <em>우축</em></span>
+        <span class="lg">${swHtml(PAL.hynix,true)}SK하이닉스${p2!=null?` <b>${fmt(p2,0)}원</b>`:''} <em>우축</em></span>`;
     }
-    $('lg3').innerHTML = `<span class="lg"><span class="sw sw-bar" style="background:${PAL.exp}"></span>반도체 수출 <em>좌축·막대</em></span>
-      <span class="lg">${swHtml(PAL.mem)}메모리 HS854232 <em>좌축·선</em></span>` + lgX;
+    const lastV = a => a && a.length ? a[a.length-1].v : null;
+    const eok = v => v!=null ? ` <b>${fmt(v)}억$</b>` : '';
+    $('lg3').innerHTML = `<span class="lg"><span class="sw sw-bar" style="background:${PAL.exp}"></span>반도체 수출${eok(lastV(semi))} <em>좌축·막대</em></span>
+      <span class="lg">${swHtml(PAL.mem)}메모리 HS854232${eok(lastV(mem))} <em>좌축·선</em></span>` + lgX;
     drawLineChart('fig3',[{data:mem,color:PAL.mem}],keys,
       {bars:{data:semi,color:PAL.exp}, rSeries:rS, rAxis:rS.length>0, h:420, pins:true});
   } else drawLineChart('fig3',[],[],{errMsg:'수출 데이터 연결 실패'});
@@ -587,12 +609,18 @@ function renderToday(){
 function renderEvents(){
   $('evFilters').innerHTML = `<button class="fbtn ${evCat==='all'?'on':''}" onclick="setEvCat('all')">전체</button>` +
     Object.keys(CATS).map(c=>`<button class="fbtn ${evCat===c?'on':''}" onclick="setEvCat('${c}')">${CATS[c].label}</button>`).join('');
-  const list = EVENTS.slice().reverse().filter(e=>evCat==='all'||e.cat===evCat);
+  const allEv = EVENTS.slice().reverse().filter(e=>evCat==='all'||e.cat===evCat);
+  const evTotal = allEv.length, evS = Math.min(evShown, evTotal);
+  const list = allEv.slice(0, evS);
   $('evGrid').innerHTML = list.map(e=>
     `<div class="ev-card ${selEvt===e.num?'sel':''}" style="border-left-color:${e.c}" onclick="pickEvent('${e.num}')">
       <div style="display:flex;justify-content:space-between"><span class="ev-num">EVT.${e.num}</span><span class="ev-date">${e.date}</span></div>
       <div class="ev-label" title="${e.label}">${e.label}</div><div class="ev-desc" title="${e.desc}">${e.desc}</div>
-    </div>`).join('');
+    </div>`).join('') +
+    `<div class="news-more" style="grid-column:1/-1">${
+       evS < evTotal ? `<button class="fbtn" onclick="moreEv()">${Math.min(5,evTotal-evS)}건 더 보기 <span class="nm-c">${evS} / ${evTotal}</span></button>` : ''
+     }${ evS > 5 ? `<button class="fbtn" onclick="foldEv()">접기</button>` : '' }</div>
+     <div class="zoomhint" style="grid-column:1/-1">기록 출처: ${EVT_SRC}</div>`;
 }
 
 let NEWS = null, TAB = 'evt';
@@ -628,11 +656,38 @@ async function loadNews(force){
   }
 }
 const NEWS_CAT_COLOR = {chip:'#0E7A55',cn:'#B5303F',earn:'#0E7A87',macro:'#2E6FB5',trade:'#A87A12',geo:'#6B4DC0',market:'#C52A46',etc:'#8B96A2'};
-let newsSort='score', newsCat='all', newsShown=5;
-function setNewsSort(s){ newsSort=s; newsShown=5; document.querySelectorAll('#newsSort .fbtn').forEach((b,i)=>b.classList.toggle('on', (i===0)===(s==='score'))); renderNews(); }
+let newsSort='score', newsCat='all', newsShown=5, newsRegion='all';
+function setNewsSort(s){ newsSort=s; newsShown=5; renderNews(); }
 function setNewsCat(c){ newsCat=c; newsShown=5; renderNews(); }
+function setNewsRegion(r){ newsRegion=r; newsShown=5; renderNews(); }
+function syncNewsBtns(){
+  const q=document.querySelectorAll('#newsSort .fbtn');
+  if(q&&q.length>=5){ q[0].classList.toggle('on',newsSort==='score'); q[1].classList.toggle('on',newsSort==='time');
+    q[2].classList.toggle('on',newsRegion==='all'); q[3].classList.toggle('on',newsRegion==='KR'); q[4].classList.toggle('on',newsRegion==='GLOBAL'); }
+}
 function moreNews(){ newsShown += 5; renderNews(); }
 function foldNews(){ newsShown = 5; renderNews(); document.getElementById('evtSection').scrollIntoView({behavior:'smooth'}); }
+let NEWS_VIEW = [];
+async function toggleArticle(i){
+  const el = document.getElementById('art'+i);
+  if(!el) return;
+  if(el.style.display === 'block'){ el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  if(el.dataset.loaded === '1') return;
+  const n = NEWS_VIEW[i];
+  el.innerHTML = '<div class="art-msg">본문을 불러오는 중입니다…</div>';
+  try{
+    const url = API.replace('type=all','type=article') + '&u=' + encodeURIComponent(n.link) + (n.region==='GLOBAL'?'&tr=1':'');
+    const j = await (await fetch(url)).json();
+    el.innerHTML = (j && j.ok
+        ? `<p class="art-text">${j.text}</p>`
+        : `<div class="art-msg">본문을 가져오지 못했습니다. 원문에서 확인해 주세요.</div>`) +
+      `<a class="art-link" href="${n.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()">원문 열기 ↗</a>`;
+    el.dataset.loaded = '1';
+  }catch(e){
+    el.innerHTML = `<div class="art-msg">본문을 가져오지 못했습니다.</div><a class="art-link" href="${n.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()">원문 열기 ↗</a>`;
+  }
+}
 function chipFor(id){
   const s = DATA.stocks || {};
   const arr = (s.dailyStocks && s.dailyStocks[id]) || (s.dailyIndices && s.dailyIndices[id]);
@@ -645,25 +700,29 @@ function renderNews(){
   if(!NEWS || !NEWS.items || !NEWS.items.length){ box.innerHTML = '<div class="err">표시할 뉴스 없음</div>'; return; }
   // 카테고리 칩
   const cats = {};
-  NEWS.items.forEach(n=>{ if(!cats[n.cat]) cats[n.cat]={label:n.catLabel||'기타',n:0}; cats[n.cat].n++; });
+  const pool = NEWS.items.filter(n=>newsRegion==='all'||n.region===newsRegion);
+  pool.forEach(n=>{ if(!cats[n.cat]) cats[n.cat]={label:n.catLabel||'기타',n:0}; cats[n.cat].n++; });
   document.getElementById('newsCats').innerHTML =
-    `<button class="fbtn ${newsCat==='all'?'on':''}" onclick="setNewsCat('all')">전체 ${NEWS.items.length}</button>` +
+    `<button class="fbtn ${newsCat==='all'?'on':''}" onclick="setNewsCat('all')">전체 ${pool.length}</button>` +
     Object.keys(cats).map(k=>`<button class="fbtn ${newsCat===k?'on':''}" onclick="setNewsCat('${k}')">${cats[k].label} ${cats[k].n}</button>`).join('');
   // 정렬·필터
-  let list = NEWS.items.filter(n=>newsCat==='all'||n.cat===newsCat);
+  syncNewsBtns();
+  let list = NEWS.items.filter(n=>(newsCat==='all'||n.cat===newsCat) && (newsRegion==='all'||n.region===newsRegion));
   list = newsSort==='score' ? list.slice().sort((a,b)=>(b.score||0)-(a.score||0)) : list;
   const total = list.length, shown = Math.min(newsShown, total);
   list = list.slice(0, shown);
-  box.innerHTML = list.map(n=>{
+  NEWS_VIEW = list;
+  box.innerHTML = list.map((n,i)=>{
     const col = NEWS_CAT_COLOR[n.cat]||'#8B96A2';
     const chips = (n.tickers||[]).map(chipFor).join('');
-    return `<a class="news-item" href="${n.link}" target="_blank" rel="noopener">
+    return `<div class="news-item" onclick="toggleArticle(${i})">
       <div class="news-meta"><span class="news-cat" style="background:${col}">${n.catLabel||''}</span>
         <span class="rg">${n.region==='KR'?'국내':'해외'}</span><span>${n.time}</span><span>${n.source}</span>
-        ${n.dup>1?`<span style="color:#C52A46">🔥${n.dup}건</span>`:''}</div>
+        ${n.dup>1?`<span style="color:#C8102E">${n.dup}건 보도</span>`:''}</div>
       <div class="news-title" title="${n.title}">${n.title}</div>
       ${n.titleEn?`<div class="news-orig" title="${n.titleEn}">원문: ${n.titleEn}</div>`:''}
-      ${chips}</a>`;
+      ${chips}
+      <div class="art" id="art${i}" style="display:none"></div></div>`;
   }).join('') +
   `<div class="news-more">${
      shown < total ? `<button class="fbtn" onclick="moreNews()">${Math.min(5,total-shown)}건 더 보기 <span class="nm-c">${shown} / ${total}</span></button>` : ''
@@ -671,9 +730,9 @@ function renderNews(){
    <div class="zoomhint">해외 기사 자동 한국어 번역 · 버즈순 = 중복 보도수·키워드 관련도 기준 · ${NEWS.updated} 수집</div>`;
 }
 let DRAM = null;
-async function loadDram(){
+async function loadDram(force){
   try{
-    const r = await fetch(API.replace('type=all','type=dram'));
+    const r = await fetch(API.replace('type=all','type=dram') + (force?'&nocache=1':''));
     DRAM = await r.json(); renderDram();
   }catch(e){ document.getElementById('fig5').innerHTML='<div class="err">DRAM 데이터 연결 실패</div>'; }
 }
@@ -698,9 +757,9 @@ function renderDram(){
 }
 function toggleStock(n){ stockOn[n]=!stockOn[n]; renderAll(); }
 function setAllStocks(on){ Object.keys(stockOn).forEach(n=>stockOn[n]=on); renderAll(); }
-async function loadTickerbar(){
+async function loadTickerbar(force){
   try{
-    const r = await fetch(API.replace('type=all','type=tickerbar'));
+    const r = await fetch(API.replace('type=all','type=tickerbar') + (force?'&nocache=1':''));
     const j = await r.json();
     if(!j.items || !j.items.length) throw 0;
     document.getElementById('tickerbar').innerHTML = j.items.map(x=>{
@@ -716,7 +775,9 @@ async function loadTickerbar(){
     document.getElementById('tickerbar').innerHTML = '<div class="err" style="padding:8px">대표지표 연결 실패 — 새로고침 시 재시도</div>';
   }
 }
-function setEvCat(c){ evCat=c; renderEvents(); }
+function setEvCat(c){ evCat=c; evShown=5; renderEvents(); }
+function moreEv(){ evShown += 5; renderEvents(); }
+function foldEv(){ evShown = 5; renderEvents(); $('evtSection').scrollIntoView({behavior:'smooth'}); }
 
 document.querySelectorAll('#rangeFilters .fbtn').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#rangeFilters .fbtn').forEach(x=>x.classList.remove('on'));
@@ -844,11 +905,11 @@ function applyLatestBadge(){
 
 let DAILY_LOADED = false, dailyLoading = false;
 async function apiGet(t){ const r = await fetch(API.replace('type=all','type='+t)); return r.json(); }
-async function ensureDaily(silent){
-  if(DAILY_LOADED || dailyLoading) return;
+async function ensureDaily(silent, force){
+  if((DAILY_LOADED && !force) || dailyLoading) return;
   dailyLoading = true;
   try{
-    const j = await apiGet('stocks_d');
+    const j = await apiGet('stocks_d' + (force?'&nocache=1':''));
     if(!DATA.stocks) DATA.stocks = { indices:{}, stocks:{} };
     DATA.stocks.dailyIndices = j.dailyIndices || {};
     DATA.stocks.dailyStocks = j.dailyStocks || {};
@@ -857,6 +918,32 @@ async function ensureDaily(silent){
   }catch(e){
     if(!silent && isDaily()) $('fig1').innerHTML = '<div class="err">일별 데이터를 받지 못했습니다. 잠시 후 기간 버튼을 다시 눌러 주세요.</div>';
   }finally{ dailyLoading = false; }
+}
+
+let refreshing = false;
+async function refreshAll(){
+  if(refreshing) return;
+  refreshing = true;
+  const btn = document.getElementById('btnRefresh');
+  const label = btn ? btn.textContent : '';
+  if(btn){ btn.textContent = '받는 중'; btn.disabled = true; }
+  try{
+    // 핵심(수출·월봉·대표지표) 먼저
+    const [ex, st] = await Promise.allSettled([apiGet('export&nocache=1'), apiGet('stocks_m&nocache=1')]);
+    if(ex.status==='fulfilled' && ex.value && ex.value.semiconMonthly && ex.value.semiconMonthly.length) DATA.export = ex.value;
+    if(st.status==='fulfilled' && st.value && st.value.indices) DATA.stocks = Object.assign(st.value, {
+      dailyIndices: (DATA.stocks&&DATA.stocks.dailyIndices)||{}, dailyStocks: (DATA.stocks&&DATA.stocks.dailyStocks)||{} });
+    applyLatestBadge(); composeLede(); fitLede(); renderAll();
+    await loadTickerbar(true);
+    // 나머지는 이어서
+    await Promise.allSettled([ ensureDaily(true, true), loadDram(true), loadEvents(true) ]);
+    NEWS = null; if(TAB === 'news') loadNews(true);
+    const t = new Date();
+    const el = $('updatedText');
+    if(el) el.textContent = el.textContent.split(' · 갱신 ')[0] +
+      ' · 갱신 ' + ('0'+t.getHours()).slice(-2) + ':' + ('0'+t.getMinutes()).slice(-2);
+  }catch(e){ /* 개별 실패는 각 영역에서 안내 */ }
+  finally{ if(btn){ btn.textContent = label || '새로 받기'; btn.disabled = false; } refreshing = false; }
 }
 
 (async function init(){
