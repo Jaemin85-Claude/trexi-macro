@@ -142,6 +142,10 @@ svg.mob .axis{font-size:27px}
 .art{margin-top:12px;padding:14px 15px;background:var(--surface-2);border-left:3px solid var(--petrol);cursor:default}
 .art-text{font-size:var(--fs-sm);line-height:1.8;color:var(--ink);white-space:normal;
   display:-webkit-box;-webkit-line-clamp:12;-webkit-box-orient:vertical;overflow:hidden}
+.art-kind{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--petrol);margin-bottom:6px}
+.art-sum{font-size:var(--fs-sm);line-height:1.85;color:var(--ink);white-space:normal}
+.art-toggle{display:inline-block;margin-top:9px;margin-right:14px;font-size:var(--fs-xs);font-weight:600;
+  color:var(--muted);border-bottom:1px dotted var(--rule-2);cursor:pointer}
 .art-msg{font-size:var(--fs-sm);color:var(--muted)}
 .art-link{display:inline-block;margin-top:10px;font-size:var(--fs-sm);font-weight:600;color:var(--petrol);text-decoration:none}
 .art-link:hover{text-decoration:underline}
@@ -695,13 +699,22 @@ async function toggleArticle(i){
   el.style.display = 'block';
   if(el.dataset.loaded === '1') return;
   const n = NEWS_VIEW[i];
-  el.innerHTML = '<div class="art-msg">본문을 불러오는 중입니다…</div>';
+  el.innerHTML = '<div class="art-msg">기사를 읽고 요약하는 중입니다…</div>';
   try{
     const url = API.replace('type=all','type=article') + '&u=' + encodeURIComponent(n.link) + (n.region==='GLOBAL'?'&tr=1':'');
     const j = await (await fetch(url)).json();
-    el.innerHTML = (j && j.ok
-        ? `<p class="art-text">${j.text}</p>`
-        : `<div class="art-msg">본문을 가져오지 못했습니다. 원문에서 확인해 주세요.</div>`) +
+    let inner;
+    if(j && j.summary){
+      inner = `<div class="art-kind">${j.summaryKind==='excerpt'?'본문 발췌':'요약'}</div>` +
+        `<div class="art-sum">${j.summary.replace(/\n/g,'<br>')}</div>` +
+        (j.text ? `<div class="art-toggle" onclick="event.stopPropagation();this.nextElementSibling.style.display='block';this.style.display='none'">본문 더 보기</div>
+                   <p class="art-text" style="display:none">${j.text}</p>` : '');
+    } else if(j && j.ok){
+      inner = `<p class="art-text">${j.text}</p>`;
+    } else {
+      inner = `<div class="art-msg">본문을 가져오지 못했습니다. 원문에서 확인해 주세요.</div>`;
+    }
+    el.innerHTML = inner +
       `<a class="art-link" href="${n.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()">원문 열기 ↗</a>`;
     el.dataset.loaded = '1';
   }catch(e){
