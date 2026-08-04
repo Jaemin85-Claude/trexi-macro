@@ -304,6 +304,7 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
     <span><span class="sw" style="background:#5B958F;height:11px;width:11px"></span>가이던스</span>
     <span><span class="sw" style="background:#fff;border:1px dashed var(--rule-2);height:11px;width:11px"></span>외삽·수집 예정(E)</span>
     <span style="color:#8a5a00">◇ 기관 전망</span>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--faint)">출처 우선순위: 10-K(SEC) → 회사 가이던스 → 기관</span>
   </div>
   <div id="fig6box"><div class="err">현금흐름 데이터를 불러오는 중입니다…</div></div>
   <div class="readout" id="ro6" style="white-space:normal">막대나 ◇를 누르면 종류·주체·발표일·수집일·대조 결과가 표시됩니다.</div>
@@ -823,7 +824,7 @@ async function loadFig06(force){
   }catch(e){ document.getElementById('fig6box').innerHTML='<div class="err">현금흐름 데이터를 받지 못했습니다. 새로 받기로 재시도해 주세요.</div>'; }
 }
 function f6Tabs(){
-  const names = {ALL:'4사 합계',MSFT:'Microsoft',AMZN:'Amazon',GOOGL:'Alphabet',META:'Meta'};
+  const names = {ALL:'합계',MSFT:'Microsoft',AMZN:'Amazon',GOOGL:'Alphabet',META:'Meta',ORCL:'Oracle'};
   document.getElementById('f6Tabs').innerHTML = Object.keys(names).map(k=>
     `<button class="fbtn ${F6CO===k?'on':''}" onclick="f6SetCo('${k}')">${names[k]}</button>`).join('');
 }
@@ -850,14 +851,15 @@ function f6Bars(){
         if(v!==null&&v!==undefined){ yrs[y].sum+=v; yrs[y].n++; }
       });
     });
-    Object.keys(yrs).sort().slice(-3).forEach(y=>{
-      if(yrs[y].n===4) bars.push({y:'FY'+y, v:Math.round(yrs[y].sum*10)/10, kind:'actual',
-        org:'4사 SEC 공시(10-K) 합', pub:'각사 연차보고', col:F6.updated.slice(0,10), year:Number(y),
-        note:'MSFT는 6월 마감 FY 포함'});
+    const nCo=Object.keys(F6.companies).length;
+    Object.keys(yrs).map(Number).filter(y=>y>=2024).sort().forEach(y=>{
+      if(yrs[y].n===nCo) bars.push({y:'FY'+y, v:Math.round(yrs[y].sum*10)/10, kind:'actual',
+        org:nCo+'사 10-K(SEC) 합', pub:'각사 연차보고', col:F6.updated.slice(0,10), year:y,
+        note:'MSFT 6월·ORCL 5월 마감 FY 포함'});
     });
     // 가이던스 합 (당해년도, 개사 guide 최신값 중앙값 합 — 4사 모두 있을 때만)
     let gs=0, gn=0, parts=[];
-    ['MSFT','AMZN','GOOGL','META'].forEach(sym=>{
+    ['MSFT','AMZN','GOOGL','META'].forEach(sym=>{   // 2026 가이던스는 4사 공표분 합
       const g=f6Guides(sym,nowY,'capex')[0];
       if(g){ const m=f6Mid(g.value); if(m){ gs+=m; gn++; parts.push(sym+' '+g.value); } }
     });
@@ -868,21 +870,33 @@ function f6Bars(){
     addDias('ALL');
   } else {
     const co=F6.companies[F6CO]||{years:{}};
-    const yrs=Object.keys(co.years).sort();
-    yrs.slice(-3).forEach(y=>{
+    Object.keys(co.years).map(Number).filter(y=>y>=2024).sort().forEach(y=>{   // FY24부터 (FY23 제외)
       const yy=co.years[y];
       if(yy.capex!==null&&yy.capex!==undefined)
-        bars.push({y:'FY'+y, v:yy.capex, kind:'actual', org:(co.name||F6CO)+' SEC 공시('+(yy.form||'10-K')+')',
+        bars.push({y:'FY'+y, v:yy.capex, kind:'actual', org:(co.name||F6CO)+' 10-K(SEC)',
           pub:'접수 '+yy.filed, col:F6.updated.slice(0,10),
-          note:'OCF '+yy.ocf+' / FCF '+yy.fcf, year:Number(y)});
+          note:'OCF '+yy.ocf+' / FCF '+yy.fcf+(yy.conv!==null?' · FCF전환율 '+yy.conv+'%':''), year:y, conv:yy.conv});
     });
-    const g=f6Guides(F6CO,nowY,'capex')[0];
-    if(g && !bars.find(b=>b.year===nowY)){
-      bars.push({y:'FY'+nowY, v:Math.round(f6Mid(g.value)), kind:'guide', org:g.org, pub:g.pub, col:g.recDate, note:g.value+'B', year:nowY});
+    // 가이던스 (회사 발표 = 10-K 다음 순위)
+    [nowY, nowY+1].forEach(gy=>{
+      const g=f6Guides(F6CO,gy,'capex')[0];
+      if(g && !bars.find(b=>b.year===gy))
+        bars.push({y:'FY'+gy, v:Math.round(f6Mid(g.value)), kind:'guide', org:g.org, pub:g.pub, col:g.recDate, note:g.value+'B', year:gy});
+    });
+    // 외삽 → 마지막 막대 뒤 연쇄 (FY27E, FY28E) — 공시 성장률 재적용
+    if(co.extrap && co.extrap.growth!==undefined){
+      const gpct=co.extrap.growth;
+      let last=bars[bars.length-1];
+      for(let step=0; step<2 && last && bars.length && bars[bars.length-1].year<nowY+2; step++){
+        const ny=bars[bars.length-1].year+1;
+        if(bars.find(b=>b.year===ny)) break;
+        const base=bars[bars.length-1];
+        const v=Math.round(base.v*(1+gpct/100));
+        bars.push({y:'FY'+ny, v:v, kind:'extrap', year:ny, chain:ny>co.extrap.year,
+          org:'공시 외삽(자동)', pub:'FY'+base.year+' '+base.v+'B × (1+'+gpct+'%, 공시 성장률'+(ny>co.extrap.year?' 연쇄 재적용':'')+')',
+          col:co.extrap.calcAt, note: ny>co.extrap.year?'연쇄 추정 — 불확실성 매우 큼':null});
+      }
     }
-    if(co.extrap && !bars.find(b=>b.year===co.extrap.year))
-      bars.push({y:'FY'+co.extrap.year, v:Math.round(co.extrap.capexNext), kind:'extrap',
-        org:'공시 외삽(자동)', pub:co.extrap.basis, col:co.extrap.calcAt, year:co.extrap.year});
     addDias(F6CO);
   }
   return {bars:bars.slice(-6), dias};
@@ -915,6 +929,15 @@ function f6Draw(){
     }
     g+=`<text class="axis" x="${cx+bw/2}" y="${B+26}" text-anchor="middle">${b.y}${b.kind==='extrap'||b.kind==='pending'?'(E)':''}</text>`;
   });
+  // 연도 간 YoY 성장률 표기 (전망 구간은 (E))
+  for(let i=1;i<bars.length;i++){
+    const a=bars[i-1], b=bars[i];
+    if(a.v==null||b.v==null||b.kind==='pending') continue;
+    const yoy=Math.round((b.v/a.v-1)*1000)/10;
+    const gx=L+step*i, gy=Math.min(y(a.v),y(b.v))-26;
+    const est=(a.kind!=='actual'||b.kind!=='actual')?'(E)':'';
+    g+=`<text class="axis" x="${gx}" y="${gy<T?T:gy}" text-anchor="middle" font-weight="700" fill="${yoy>=0?'#C8102E':'#16509B'}" font-size="${MOB?24:13}">${yoy>=0?'+':''}${yoy}%${est}</text>`;
+  }
   dias.forEach((m,j)=>{
     let bi=bars.findIndex(b=>Number(b.y)===m.year); if(bi<0) bi=bars.length-1;
     const cx=L+step*bi+step/2+(j%2?26:-26);
@@ -922,11 +945,21 @@ function f6Draw(){
     g+=`<text x="${cx}" y="${T-12}" text-anchor="middle" font-size="${sel?24:18}" fill="${m.stale?'#c9b18a':'#8a5a00'}" onclick="f6Pick(-1,${j})" style="cursor:pointer">◇</text>`;
   });
   g+=`</svg>`;
+  // 2026 캘린더 분기 트래커 — 확정 발표분 + 예정
+  if(F6CO!=='ALL' && co && co.cal2026){
+    const cq={}; co.cal2026.forEach(q=>cq[q.cq]=q);
+    g+=`<div class="f6-qcard" style="border-left-color:#5B958F"><b style="color:var(--ink)">2026년 분기 트래커 (캘린더 기준)</b> — `+
+      [1,2,3,4].map(n=>{
+        const q=cq[n];
+        if(q) return `<span style="color:var(--ink)">Q${n} capex $${q.capex}B${q.fcf!==null?' · FCF '+(q.fcf<0?'-':'')+'$'+Math.abs(q.fcf)+'B':''} <span style="color:var(--petrol)">[확정 ${q.src}]</span></span>`;
+        return `<span>Q${n} 예정(미발표)</span>`;
+      }).join(' &nbsp;|&nbsp; ')+`</div>`;
+  }
   // 최신 분기 카드 (개사)
   if(F6CO!=='ALL' && co && co.quarters && co.quarters.length){
     const q=co.quarters[co.quarters.length-1];
     const f=v=>v===null||v===undefined?'—':(v<0?'-':'')+'$'+Math.abs(v)+'B';
-    g+=`<div class="f6-qcard">최근 분기 공시 FY${q.fy}Q${q.fq}${co.fyNote?' · '+co.fyNote:''} (접수 ${q.filed}) — OCF ${f(q.ocf)} · capex ${f(q.capex)} · FCF <b style="color:${q.fcf<0?'var(--down)':'var(--up)'}">${f(q.fcf)}</b> <span style="color:var(--petrol)">[SEC 공시]</span></div>`;
+    g+=`<div class="f6-qcard">최근 분기 공시 FY${q.fy}Q${q.fq}${co.fyNote?' · '+co.fyNote:''} (접수 ${q.filed}) — OCF ${f(q.ocf)} · capex ${f(q.capex)} · FCF <b style="color:${q.fcf<0?'var(--down)':'var(--up)'}">${f(q.fcf)}</b>${q.ocf&&q.fcf!==null?' · FCF전환율(FCF/OCF) '+Math.round(q.fcf/q.ocf*1000)/10+'%':''} <span style="color:var(--petrol)">[SEC 공시]</span></div>`;
   }
   box.innerHTML=g;
 }
