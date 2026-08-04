@@ -1035,7 +1035,8 @@ function f6Draw(){
       g+=`<rect x="${cx}" y="${y(b.v)}" width="${bw}" height="${B-y(b.v)-(B-y(cf))}" fill="#BDD5D1" stroke="#5B958F" stroke-dasharray="4 3" ${sel?'stroke="#E8A317" stroke-width="3" stroke-dasharray="0"':''} onclick="f6Pick(${i},-1)" style="cursor:pointer"/>`;
       g+=`<rect x="${cx}" y="${y(cf)}" width="${bw}" height="${B-y(cf)}" fill="#0E5F58" onclick="f6Pick(${i},-1)" style="cursor:pointer"/>`;
       g+=`<text class="axis" x="${cx+bw/2}" y="${y(b.v)-8}" text-anchor="middle" font-weight="700" fill="#14181D">${b.v}</text>`;
-      g+=`<text class="axis" x="${cx+bw/2}" y="${y(cf)+16}" text-anchor="middle" font-size="${MOB?22:12}" fill="#fff">${cf}</text>`;
+      g+=`<line x1="${cx+bw}" y1="${y(cf/2)}" x2="${cx+bw+8}" y2="${y(cf/2)}" stroke="#0E5F58" stroke-width="1"/>`;
+      g+=`<text class="axis" x="${cx+bw+12}" y="${y(cf/2)+5}" font-size="${MOB?24:13}" font-weight="700" fill="#0E5F58">확정 ${cf}</text>`;
     }else{
       const dash=b.kind==='extrap'?'stroke="#5B958F" stroke-dasharray="5 4"':'';
       g+=`<rect x="${cx}" y="${y(b.v)}" width="${bw}" height="${B-y(b.v)}" fill="${KC[b.kind]}" ${dash} ${sel?'stroke="#E8A317" stroke-width="3"':''} onclick="f6Pick(${i},-1)" style="cursor:pointer"/>`;
