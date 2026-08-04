@@ -155,6 +155,13 @@ svg.mob .axis{font-size:27px}
 .cmp th,.cmp td{border-bottom:1px solid var(--rule);padding:6px 5px;text-align:left}
 .cmp th{font-family:var(--mono);font-size:10px;color:var(--faint);font-weight:500}
 .f6-pending{fill:var(--surface-2);stroke:var(--rule-2);stroke-dasharray:5 4}
+.sig7{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:1px;background:var(--rule);border:1px solid var(--rule);margin-top:12px}
+.sig7>div{background:var(--surface);padding:11px 13px;min-width:0}
+.sig7 .sn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--faint)}
+.sig7 .sv{font-size:15px;font-weight:700;margin-top:2px}
+.sig7 .sd{font-size:11px;color:var(--muted);margin-top:2px}
+.sig7 .warn7{background:#FFF3E0;border-left:3px solid #E8A317}
+@media(max-width:560px){.sig7{grid-template-columns:1fr}}
 .f6-qcard{font-family:var(--mono);font-size:11px;color:var(--faint);border:1px solid var(--rule);border-left:3px solid var(--petrol);padding:8px 11px;margin-top:7px;background:var(--surface-2);line-height:1.8}
 .art-link{display:inline-block;margin-top:10px;font-size:var(--fs-sm);font-weight:600;color:var(--petrol);text-decoration:none}
 .art-link:hover{text-decoration:underline}
@@ -308,6 +315,22 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
   </div>
   <div id="fig6box"><div class="err">현금흐름 데이터를 불러오는 중입니다…</div></div>
   <div class="readout" id="ro6" style="white-space:normal">막대나 ◇를 누르면 종류·주체·발표일·수집일·대조 결과가 표시됩니다.</div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="fig">FIG. 07 · 전이</span>
+    <h2>수요의 돈줄은 공급으로 언제 옮겨가나</h2>
+  </div>
+  <div class="desc">하이퍼스케일러 capex 성장률(수요·연간 수평선)과 마이크론 분기 매출 YoY(공급·선행 지표)를 겹칩니다. 환산 예측은 하지 않으며 방향 대조만 자동화합니다. 점을 누르면 출처가 표시됩니다.</div>
+  <div class="legend">
+    <span><span class="sw" style="width:18px;height:3px;background:#B8891E"></span>마이크론 매출 YoY <em>분기·선행</em></span>
+    <span><span class="sw" style="width:18px;height:3px;background:#0E5F58"></span>하이퍼 capex YoY <em>연간 수평선</em></span>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--faint)">삼성·하이닉스: DART API 2차 예정</span>
+  </div>
+  <div id="fig7box"><div class="err">전이 데이터를 불러오는 중입니다…</div></div>
+  <div class="sig7" id="sig7"></div>
+  <div class="readout" id="ro7" style="white-space:normal">점을 누르면 해당 분기의 수치·출처가 표시됩니다.</div>
 </section>
 
 <section id="evtSection">
@@ -816,6 +839,78 @@ function renderDram(){
     `<br><span style="color:var(--faint)">${DRAM.seed.note} · *표시는 보도상 범위·역산값 · 시트 일별 누적 ${dn?dn+'건 반영':'대기 중'}</span>`;
 }
 let F6=null, F6CO='ALL', F6SEL=null;
+let F7=null, F7SEL=null;
+async function loadFig07(force){
+  try{
+    const r = await fetch(API.replace('type=all','type=fig07') + (force?'&nocache=1':''));
+    F7 = await r.json();
+    f7Draw();
+  }catch(e){ document.getElementById('fig7box').innerHTML='<div class="err">전이 데이터를 받지 못했습니다. 새로 받기로 재시도해 주세요.</div>'; }
+}
+function f7Draw(){
+  const box=document.getElementById('fig7box');
+  if(!F7 || !F7.mu || F7.mu.err){ box.innerHTML='<div class="err">마이크론 수집 실패'+(F7&&F7.mu&&F7.mu.err?': '+F7.mu.err:'')+'</div>'; return; }
+  const qs=(F7.mu.quarters||[]).filter(q=>q.yoy!==null).slice(-10);
+  if(!qs.length){ box.innerHTML='<div class="err">YoY 계산 가능한 분기가 아직 없습니다</div>'; return; }
+  const ann=(F7.hyper&&F7.hyper.annual)||[];
+  const W=980,H=350,L=64,B=290,T=40,R=950;
+  const vals=qs.map(q=>q.yoy).concat(ann.filter(a=>a.yoy!==null).map(a=>a.yoy));
+  const vmax=Math.max(...vals,50)*1.12, vmin=Math.min(...vals,0);
+  const y=v=>B-(v-vmin)/(vmax-vmin)*(B-T);
+  const x=i=>L+i*(R-L)/Math.max(qs.length-1,1);
+  let g=`<svg class="${MOB?'mob':''}" viewBox="0 0 ${W} ${H}">`;
+  [vmin,0,vmax*0.5,vmax].forEach(v=>{
+    g+=`<line x1="${L}" y1="${y(v)}" x2="${R}" y2="${y(v)}" class="gline" ${v===0?'stroke="#D2CFC7"':''}/>`;
+    g+=`<text class="axis" x="${L-7}" y="${y(v)+5}" text-anchor="end">${Math.round(v)}%</text>`;
+  });
+  // 하이퍼 연간 YoY — 해당 캘린더 연도 분기 구간에 수평선
+  ann.filter(a=>a.yoy!==null).forEach((a,ai)=>{
+    const idx=qs.map((q,i)=>q.cy===a.fy?i:-1).filter(i=>i>=0);
+    if(!idx.length) return;
+    const x1=x(Math.min(...idx))-14, x2=x(Math.max(...idx))+14, yy=y(a.yoy);
+    const dash=a.kind==='guide'?'stroke-dasharray="7 5"':'';
+    g+=`<line x1="${x1}" y1="${yy}" x2="${x2}" y2="${yy}" stroke="#0E5F58" stroke-width="3.5" ${dash} onclick="f7Pick(-1,${ai})" style="cursor:pointer"/>`;
+    g+=`<text class="axis" x="${x2+4}" y="${yy+4}" fill="#0E5F58" font-weight="700">+${a.yoy}%${a.kind==='guide'?'(E)':''}</text>`;
+  });
+  // MU 선
+  g+=`<polyline points="${qs.map((q,i)=>x(i)+','+y(q.yoy)).join(' ')}" fill="none" stroke="#B8891E" stroke-width="2.8"/>`;
+  qs.forEach((q,i)=>{
+    const sel=F7SEL&&F7SEL.t==='mu'&&F7SEL.i===i;
+    g+=`<circle cx="${x(i)}" cy="${y(q.yoy)}" r="${sel?7:4.5}" fill="#B8891E" ${sel?'stroke="#E8A317" stroke-width="3"':''} onclick="f7Pick(${i},-1)" style="cursor:pointer"/>`;
+    if(i%2===0||i===qs.length-1) g+=`<text class="axis" x="${x(i)}" y="${B+26}" text-anchor="middle">${String(q.cy).slice(2)}Q${q.cq}</text>`;
+  });
+  g+=`</svg>`;
+  box.innerHTML=g;
+  // 신호 패널
+  const dirQ=a=>{if(a.length<2)return '판정 불가';const d=a[a.length-1]-a[a.length-2];return d>1?'가속':d<-1?'감속':'유지';};
+  const muD=dirQ(qs.map(q=>q.yoy));
+  const aY=ann.filter(a=>a.yoy!==null);
+  const hyD=aY.length>=2?(aY[aY.length-1].yoy>aY[aY.length-2].yoy+1?'가속':aY[aY.length-1].yoy<aY[aY.length-2].yoy-1?'감속':'유지'):'판정 불가';
+  const mis=(hyD==='가속'&&muD==='감속')||(hyD==='감속'&&muD==='가속');
+  const last=qs[qs.length-1], lastA=aY[aY.length-1];
+  document.getElementById('sig7').innerHTML=`
+   <div><div class="sn">수요 — CAPEX YoY (연간)</div><div class="sv" style="color:${hyD==='가속'?'var(--up)':hyD==='감속'?'var(--down)':'var(--ink)'}">${hyD}${lastA?' (+'+lastA.yoy+'%'+(lastA.kind==='guide'?'E':'')+')':''}</div><div class="sd">${F7.hyper?F7.hyper.basis:'FIG.06 캐시 대기'}</div></div>
+   <div><div class="sn">공급 — MU 매출 YoY (분기)</div><div class="sv" style="color:${muD==='가속'?'var(--up)':muD==='감속'?'var(--down)':'var(--ink)'}">${muD} (${last.yoy>=0?'+':''}${last.yoy}%)</div><div class="sd">${last.cy}Q${last.cq} · SEC 공시 · 선행 지표</div></div>
+   <div class="${mis?'warn7':''}"><div class="sn">전이 판정</div><div class="sv">${mis?'⚠ 괴리 관찰':'정상 전이'}</div><div class="sd">${mis?'수요·공급 방향 상반 — 2분기 지속 시 변곡 경고':'수요·공급 같은 방향 — 사이클 유지'}</div></div>`;
+}
+function f7Pick(mi,ai){
+  const ro=document.getElementById('ro7');
+  if(ai>=0){
+    F7SEL={t:'hy',i:ai}; f7Draw();
+    const a=F7.hyper.annual.filter(x=>x.yoy!==null)[ai];
+    ro.innerHTML=`<b>하이퍼 FY${a.fy} capex $${a.capex}B · YoY +${a.yoy}%${a.kind==='guide'?'(가이던스 함의)':''}</b>
+      <div class="tagline"><span class="tag k">${a.kind==='guide'?'회사 가이던스':'10-K(SEC)'}</span>
+      <span class="tag">${F7.hyper.basis}</span><span class="tag">수집: ${F7.updated.slice(0,10)}</span></div>`;
+    return;
+  }
+  const qs=(F7.mu.quarters||[]).filter(q=>q.yoy!==null).slice(-10);
+  const q=qs[mi]; if(!q) return;
+  F7SEL={t:'mu',i:mi}; f7Draw();
+  ro.innerHTML=`<b>마이크론 ${q.cy}Q${q.cq} 매출 $${q.rev}B · YoY ${q.yoy>=0?'+':''}${q.yoy}%</b>
+    <div class="tagline"><span class="tag k">SEC 공시</span><span class="tag">근거: ${q.src}</span>
+    <span class="tag">접수: ${q.filed}</span><span class="tag">수집: ${F7.updated.slice(0,10)}</span></div>
+    <div style="font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:6px">MU 회계연도 8월 마감 — 캘린더 분기는 종료일 기준 · YTD 누적 차감으로 분기 단독값 산출</div>`;
+}
 async function loadFig06(force){
   try{
     const r = await fetch(API.replace('type=all','type=fig06') + (force?'&nocache=1':''));
@@ -1192,7 +1287,7 @@ async function refreshAll(){
     applyLatestBadge(); composeLede(); fitLede(); renderAll();
     await loadTickerbar(true);
     // 나머지는 이어서
-    await Promise.allSettled([ ensureDaily(true, true), loadDram(true), loadEvents(true), loadFig06(true) ]);
+    await Promise.allSettled([ ensureDaily(true, true), loadDram(true), loadEvents(true), loadFig06(true), loadFig07(true) ]);
     NEWS = null; if(TAB === 'news') loadNews(true);
     const t = new Date();
     const el = $('updatedText');
@@ -1218,6 +1313,7 @@ async function refreshAll(){
   loadDram();
   loadEvents();
   loadFig06();
+  loadFig07();
   attachZoom('fig5');
   ensureDaily(true);           // 일별은 뒤에서 조용히 채움
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitLede);
