@@ -327,7 +327,8 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
   <div class="legend">
     <span><span class="sw" style="width:18px;height:3px;background:#B8891E"></span>마이크론 매출 YoY <em>분기·선행</em></span>
     <span><span class="sw" style="width:18px;height:3px;background:#0E5F58"></span>하이퍼 capex YoY <em>연간 수평선</em></span>
-    <span style="font-family:var(--mono);font-size:10px;color:var(--faint)">삼성·하이닉스: DART API 2차 예정</span>
+    <span><span class="sw" style="width:18px;height:3px;background:repeating-linear-gradient(90deg,#C8102E 0 5px,transparent 5px 9px)"></span>SK하이닉스 매출 YoY <em>분기·DART</em></span>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--faint)">삼성 DS부문: 실적발표 시딩 예정(전사 혼재 제외)</span>
   </div>
   <div id="fig7box"><div class="err">전이 데이터를 불러오는 중입니다…</div></div>
   <div class="sig7" id="sig7"></div>
@@ -855,7 +856,8 @@ function f7Draw(){
   if(!qs.length){ box.innerHTML='<div class="err">YoY 계산 가능한 분기가 아직 없습니다</div>'; return; }
   const ann=(F7.hyper&&F7.hyper.annual)||[];
   const W=980,H=350,L=64,B=290,T=40,R=950;
-  const vals=qs.map(q=>q.yoy).concat(ann.filter(a=>a.yoy!==null).map(a=>a.yoy));
+  const krAll=((F7.kr&&F7.kr['SK하이닉스'])||[]).filter(r=>r.yoy!==null).map(r=>r.yoy);
+  const vals=qs.map(q=>q.yoy).concat(ann.filter(a=>a.yoy!==null).map(a=>a.yoy)).concat(krAll);
   const vmax=Math.max(...vals,50)*1.12, vmin=Math.min(...vals,0);
   const y=v=>B-(v-vmin)/(vmax-vmin)*(B-T);
   const x=i=>L+i*(R-L)/Math.max(qs.length-1,1);
@@ -873,6 +875,19 @@ function f7Draw(){
     g+=`<line x1="${x1}" y1="${yy}" x2="${x2}" y2="${yy}" stroke="#0E5F58" stroke-width="3.5" ${dash} onclick="f7Pick(-1,${ai})" style="cursor:pointer"/>`;
     g+=`<text class="axis" x="${x2+4}" y="${yy+4}" fill="#0E5F58" font-weight="700">+${a.yoy}%${a.kind==='guide'?'(E)':''}</text>`;
   });
+  // 하이닉스 선 (DART 시트) — MU 캘린더 분기 축에 매핑 (국내 FY=캘린더)
+  const kr=(F6 && false) ? null : (F7.kr && F7.kr['SK하이닉스']) || [];
+  const krPts=[];
+  kr.forEach(r=>{ if(r.yoy===null) return;
+    const i=qs.findIndex(q=>q.cy===r.fy && q.cq===r.q);
+    if(i>=0) krPts.push({i, yoy:r.yoy, r}); });
+  if(krPts.length>1){
+    g+=`<polyline points="${krPts.map(p=>x(p.i)+','+y(p.yoy)).join(' ')}" fill="none" stroke="#C8102E" stroke-width="2.4" stroke-dasharray="7 5"/>`;
+  }
+  krPts.forEach((p,k)=>{
+    const sel=F7SEL&&F7SEL.t==='kr'&&F7SEL.i===k;
+    g+=`<circle cx="${x(p.i)}" cy="${y(p.yoy)}" r="${sel?7:4.5}" fill="#C8102E" ${sel?'stroke="#E8A317" stroke-width="3"':''} onclick="f7Pick(-2,${k})" style="cursor:pointer"/>`;
+  });
   // MU 선
   g+=`<polyline points="${qs.map((q,i)=>x(i)+','+y(q.yoy)).join(' ')}" fill="none" stroke="#B8891E" stroke-width="2.8"/>`;
   qs.forEach((q,i)=>{
@@ -885,17 +900,32 @@ function f7Draw(){
   // 신호 패널
   const dirQ=a=>{if(a.length<2)return '판정 불가';const d=a[a.length-1]-a[a.length-2];return d>1?'가속':d<-1?'감속':'유지';};
   const muD=dirQ(qs.map(q=>q.yoy));
+  const krQ=((F7.kr&&F7.kr['SK하이닉스'])||[]).filter(r=>r.yoy!==null);
+  const krD=krQ.length>=2?dirQ(krQ.map(r=>r.yoy)):null;
   const aY=ann.filter(a=>a.yoy!==null);
   const hyD=aY.length>=2?(aY[aY.length-1].yoy>aY[aY.length-2].yoy+1?'가속':aY[aY.length-1].yoy<aY[aY.length-2].yoy-1?'감속':'유지'):'판정 불가';
   const mis=(hyD==='가속'&&muD==='감속')||(hyD==='감속'&&muD==='가속');
   const last=qs[qs.length-1], lastA=aY[aY.length-1];
   document.getElementById('sig7').innerHTML=`
    <div><div class="sn">수요 — CAPEX YoY (연간)</div><div class="sv" style="color:${hyD==='가속'?'var(--up)':hyD==='감속'?'var(--down)':'var(--ink)'}">${hyD}${lastA?' (+'+lastA.yoy+'%'+(lastA.kind==='guide'?'E':'')+')':''}</div><div class="sd">${F7.hyper?F7.hyper.basis:'FIG.06 캐시 대기'}</div></div>
-   <div><div class="sn">공급 — MU 매출 YoY (분기)</div><div class="sv" style="color:${muD==='가속'?'var(--up)':muD==='감속'?'var(--down)':'var(--ink)'}">${muD} (${last.yoy>=0?'+':''}${last.yoy}%)</div><div class="sd">${last.cy}Q${last.cq} · SEC 공시 · 선행 지표</div></div>
+   <div><div class="sn">공급 — 메모리 매출 YoY</div><div class="sv" style="color:${muD==='가속'?'var(--up)':muD==='감속'?'var(--down)':'var(--ink)'}">MU ${muD} (${last.yoy>=0?'+':''}${last.yoy}%)</div>
+     <div class="sd">${krD?('하이닉스 '+krD+' ('+(krQ[krQ.length-1].yoy>=0?'+':'')+krQ[krQ.length-1].yoy+'%, '+krQ[krQ.length-1].fy+'Q'+krQ[krQ.length-1].q+' DART)'):'하이닉스: 수집 대기'} · ${last.cy}Q${last.cq} · MU 선행</div></div>
    <div class="${mis?'warn7':''}"><div class="sn">전이 판정</div><div class="sv">${mis?'⚠ 괴리 관찰':'정상 전이'}</div><div class="sd">${mis?'수요·공급 방향 상반 — 2분기 지속 시 변곡 경고':'수요·공급 같은 방향 — 사이클 유지'}</div></div>`;
 }
 function f7Pick(mi,ai){
   const ro=document.getElementById('ro7');
+  if(mi===-2){  // 하이닉스 점
+    const qs2=(F7.mu.quarters||[]).filter(q=>q.yoy!==null).slice(-10);
+    const kr=(F7.kr&&F7.kr['SK하이닉스'])||[];
+    const pts=[]; kr.forEach(r=>{ if(r.yoy===null) return; const i=qs2.findIndex(q=>q.cy===r.fy&&q.cq===r.q); if(i>=0) pts.push(r); });
+    const r=pts[ai]; if(!r) return;
+    F7SEL={t:'kr',i:ai}; f7Draw();
+    ro.innerHTML=`<b>SK하이닉스 ${r.fy}Q${r.q} 매출 ${r.rev}조 · YoY ${r.yoy>=0?'+':''}${r.yoy}%</b>
+      <div class="tagline"><span class="tag k">DART 전자공시(연결)</span><span class="tag">근거: ${r.src}</span>
+      <span class="tag">접수번호: ${r.rcept||'—'}</span><span class="tag">수집: ${(r.collected||'').slice(0,10)}</span></div>
+      <div style="font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:6px">전사 매출 ≈ 메모리 (순수 메모리 기업) · GitHub Actions가 DART에서 자동 수집</div>`;
+    return;
+  }
   if(ai>=0){
     F7SEL={t:'hy',i:ai}; f7Draw();
     const a=F7.hyper.annual.filter(x=>x.yoy!==null)[ai];
