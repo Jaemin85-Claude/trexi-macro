@@ -147,6 +147,15 @@ svg.mob .axis{font-size:27px}
 .art-toggle{display:inline-block;margin-top:9px;margin-right:14px;font-size:var(--fs-xs);font-weight:600;
   color:var(--muted);border-bottom:1px dotted var(--rule-2);cursor:pointer}
 .art-msg{font-size:var(--fs-sm);color:var(--muted)}
+.hit{font-family:var(--mono);font-size:10px;font-weight:700;border-radius:2px;padding:1px 6px;color:#fff}
+.hit.g{background:#0E7A55}.hit.y{background:#B8891E}.hit.r{background:#B5303F}
+.cmp{margin-top:9px;border:1px solid var(--rule);border-left:3px solid #B8891E;padding:9px 11px;background:var(--surface-2)}
+.cmp .ct{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:#8a5a00;margin-bottom:5px}
+.cmp table{width:100%;border-collapse:collapse;margin-top:6px;font-size:11.5px}
+.cmp th,.cmp td{border-bottom:1px solid var(--rule);padding:6px 5px;text-align:left}
+.cmp th{font-family:var(--mono);font-size:10px;color:var(--faint);font-weight:500}
+.f6-pending{fill:var(--surface-2);stroke:var(--rule-2);stroke-dasharray:5 4}
+.f6-qcard{font-family:var(--mono);font-size:11px;color:var(--faint);border:1px solid var(--rule);border-left:3px solid var(--petrol);padding:8px 11px;margin-top:7px;background:var(--surface-2);line-height:1.8}
 .art-link{display:inline-block;margin-top:10px;font-size:var(--fs-sm);font-weight:600;color:var(--petrol);text-decoration:none}
 .art-link:hover{text-decoration:underline}
 .news-item:hover{background:var(--surface-2)}
@@ -281,6 +290,23 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
   <div class="legend" id="lg5"></div>
   <div id="fig5" class="chartbox"></div>
   <div class="readout" id="ro5" style="white-space:normal">가격 데이터를 불러오는 중입니다.</div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="fig">FIG. 06 · 현금흐름</span>
+    <h2>하이퍼스케일러는 언제까지 쓸 수 있나</h2>
+  </div>
+  <div class="desc">연간 capex(십억$). 진한색=SEC 공시 확정, 중간색=회사 가이던스, 점선=수집 예정·외삽(E), ◇=기관 전망. 막대와 ◇를 누르면 출처 꼬리표·전망 대조가 표시됩니다.</div>
+  <div class="ev-filters" id="f6Tabs"></div>
+  <div class="legend">
+    <span><span class="sw" style="background:#0E5F58;height:11px;width:11px"></span>공시 실적</span>
+    <span><span class="sw" style="background:#5B958F;height:11px;width:11px"></span>가이던스</span>
+    <span><span class="sw" style="background:#fff;border:1px dashed var(--rule-2);height:11px;width:11px"></span>외삽·수집 예정(E)</span>
+    <span style="color:#8a5a00">◇ 기관 전망</span>
+  </div>
+  <div id="fig6box"><div class="err">현금흐름 데이터를 불러오는 중입니다…</div></div>
+  <div class="readout" id="ro6" style="white-space:normal">막대나 ◇를 누르면 종류·주체·발표일·수집일·대조 결과가 표시됩니다.</div>
 </section>
 
 <section id="evtSection">
@@ -788,6 +814,170 @@ function renderDram(){
     (DRAM.seed.outlook||[]).map(o=>'· '+o).join('<br>') +
     `<br><span style="color:var(--faint)">${DRAM.seed.note} · *표시는 보도상 범위·역산값 · 시트 일별 누적 ${dn?dn+'건 반영':'대기 중'}</span>`;
 }
+let F6=null, F6CO='ALL', F6SEL=null;
+async function loadFig06(force){
+  try{
+    const r = await fetch(API.replace('type=all','type=fig06') + (force?'&nocache=1':''));
+    F6 = await r.json();
+    f6Tabs(); f6Draw();
+  }catch(e){ document.getElementById('fig6box').innerHTML='<div class="err">현금흐름 데이터를 받지 못했습니다. 새로 받기로 재시도해 주세요.</div>'; }
+}
+function f6Tabs(){
+  const names = {ALL:'4사 합계',MSFT:'Microsoft',AMZN:'Amazon',GOOGL:'Alphabet',META:'Meta'};
+  document.getElementById('f6Tabs').innerHTML = Object.keys(names).map(k=>
+    `<button class="fbtn ${F6CO===k?'on':''}" onclick="f6SetCo('${k}')">${names[k]}</button>`).join('');
+}
+function f6SetCo(k){ F6CO=k; F6SEL=null; f6Tabs(); f6Draw();
+  document.getElementById('ro6').innerHTML='막대나 ◇를 누르면 종류·주체·발표일·수집일·대조 결과가 표시됩니다.'; }
+
+function f6Guides(sym, year, metric){  // append-only 이력 (최신 recDate 우선 정렬)
+  return (F6.forecasts||[]).filter(f=>f.kind==='guide'&&f.target===sym&&f.year===year&&f.metric===metric)
+    .sort((a,b)=>(b.recDate+b.pub).localeCompare(a.recDate+a.pub));
+}
+function f6Mid(s){ const m=String(s).match(/(-?\d+(?:\.\d+)?)(?:\s*[-~]\s*(-?\d+(?:\.\d+)?))?/);
+  return m ? (m[2]?(Number(m[1])+Number(m[2]))/2:Number(m[1])) : null; }
+
+function f6Bars(){
+  const nowY = new Date().getFullYear();
+  const bars=[], dias=[];
+  const addDias = t => (F6.forecasts||[]).filter(f=>f.kind==='analyst'&&f.target===t).forEach(f=>dias.push(f));
+  if(F6CO==='ALL'){
+    const yrs={};
+    Object.keys(F6.companies).forEach(sym=>{
+      Object.keys(F6.companies[sym].years).forEach(y=>{
+        const v=F6.companies[sym].years[y].capex;
+        if(!yrs[y]) yrs[y]={sum:0,n:0};
+        if(v!==null&&v!==undefined){ yrs[y].sum+=v; yrs[y].n++; }
+      });
+    });
+    Object.keys(yrs).sort().slice(-3).forEach(y=>{
+      if(yrs[y].n===4) bars.push({y:'FY'+y, v:Math.round(yrs[y].sum*10)/10, kind:'actual',
+        org:'4사 SEC 공시(10-K) 합', pub:'각사 연차보고', col:F6.updated.slice(0,10), year:Number(y),
+        note:'MSFT는 6월 마감 FY 포함'});
+    });
+    // 가이던스 합 (당해년도, 개사 guide 최신값 중앙값 합 — 4사 모두 있을 때만)
+    let gs=0, gn=0, parts=[];
+    ['MSFT','AMZN','GOOGL','META'].forEach(sym=>{
+      const g=f6Guides(sym,nowY,'capex')[0];
+      if(g){ const m=f6Mid(g.value); if(m){ gs+=m; gn++; parts.push(sym+' '+g.value); } }
+    });
+    if(gn===4 && !bars.find(b=>b.year===nowY))
+      bars.push({y:'FY'+nowY, v:Math.round(gs), kind:'guide', org:'각사 실적발표 가이던스 합',
+        pub:'2026-07 실적시즌', col:F6.updated.slice(0,10), note:parts.join(' · '), year:nowY});
+    bars.push({y:'FY'+(nowY+1), v:null, kind:'pending', note:'각사 10-K 접수 후 외삽 자동 계산', year:nowY+1});
+    addDias('ALL');
+  } else {
+    const co=F6.companies[F6CO]||{years:{}};
+    const yrs=Object.keys(co.years).sort();
+    yrs.slice(-3).forEach(y=>{
+      const yy=co.years[y];
+      if(yy.capex!==null&&yy.capex!==undefined)
+        bars.push({y:'FY'+y, v:yy.capex, kind:'actual', org:(co.name||F6CO)+' SEC 공시('+(yy.form||'10-K')+')',
+          pub:'접수 '+yy.filed, col:F6.updated.slice(0,10),
+          note:'OCF '+yy.ocf+' / FCF '+yy.fcf, year:Number(y)});
+    });
+    const g=f6Guides(F6CO,nowY,'capex')[0];
+    if(g && !bars.find(b=>b.year===nowY)){
+      bars.push({y:'FY'+nowY, v:Math.round(f6Mid(g.value)), kind:'guide', org:g.org, pub:g.pub, col:g.recDate, note:g.value+'B', year:nowY});
+    }
+    if(co.extrap && !bars.find(b=>b.year===co.extrap.year))
+      bars.push({y:'FY'+co.extrap.year, v:Math.round(co.extrap.capexNext), kind:'extrap',
+        org:'공시 외삽(자동)', pub:co.extrap.basis, col:co.extrap.calcAt, year:co.extrap.year});
+    addDias(F6CO);
+  }
+  return {bars:bars.slice(-6), dias};
+}
+
+function f6Draw(){
+  const box=document.getElementById('fig6box');
+  if(!F6 || !F6.companies){ box.innerHTML='<div class="err">데이터 없음</div>'; return; }
+  const co=F6.companies[F6CO];
+  if(F6CO!=='ALL' && co && co.err){ box.innerHTML='<div class="err">'+co.name+' 수집 실패: '+co.err+'</div>'; return; }
+  const {bars,dias}=f6Bars();
+  if(!bars.length){ box.innerHTML='<div class="err">표시할 연간 데이터가 아직 없습니다 (공시 수집 중)</div>'; return; }
+  const W=980,H=340,L=64,B=290,T=44,bw=Math.min(90,(W-L-30)/bars.length*0.55),step=(W-L-30)/bars.length;
+  const vmax=Math.max(...bars.map(b=>b.v||0),100)*1.18;
+  const y=v=>B-(v/vmax)*(B-T);
+  const KC={actual:'#0E5F58',guide:'#5B958F',extrap:'#BDD5D1'};
+  let g=`<svg class="${MOB?'mob':''}" viewBox="0 0 ${W} ${H}">`;
+  [0,.33,.66,1].forEach(f=>{const vy=y(vmax*f);
+    g+=`<line x1="${L}" y1="${vy}" x2="${W-14}" y2="${vy}" class="gline"/>`;
+    g+=`<text class="axis" x="${L-7}" y="${vy+5}" text-anchor="end">${Math.round(vmax*f)}</text>`;});
+  bars.forEach((b,i)=>{
+    const cx=L+step*i+(step-bw)/2;
+    const sel=F6SEL&&F6SEL.t==='bar'&&F6SEL.i===i;
+    if(b.v===null){
+      g+=`<rect class="f6-pending" x="${cx}" y="${y(vmax*0.4)}" width="${bw}" height="${B-y(vmax*0.4)}" onclick="f6Pick(${i},-1)" style="cursor:pointer"/>`;
+    }else{
+      const dash=b.kind==='extrap'?'stroke="#5B958F" stroke-dasharray="5 4"':'';
+      g+=`<rect x="${cx}" y="${y(b.v)}" width="${bw}" height="${B-y(b.v)}" fill="${KC[b.kind]}" ${dash} ${sel?'stroke="#E8A317" stroke-width="3"':''} onclick="f6Pick(${i},-1)" style="cursor:pointer"/>`;
+      g+=`<text class="axis" x="${cx+bw/2}" y="${y(b.v)-8}" text-anchor="middle" font-weight="700" fill="#14181D">${b.v}</text>`;
+    }
+    g+=`<text class="axis" x="${cx+bw/2}" y="${B+26}" text-anchor="middle">${b.y}${b.kind==='extrap'||b.kind==='pending'?'(E)':''}</text>`;
+  });
+  dias.forEach((m,j)=>{
+    let bi=bars.findIndex(b=>Number(b.y)===m.year); if(bi<0) bi=bars.length-1;
+    const cx=L+step*bi+step/2+(j%2?26:-26);
+    const sel=F6SEL&&F6SEL.t==='dia'&&F6SEL.i===j;
+    g+=`<text x="${cx}" y="${T-12}" text-anchor="middle" font-size="${sel?24:18}" fill="${m.stale?'#c9b18a':'#8a5a00'}" onclick="f6Pick(-1,${j})" style="cursor:pointer">◇</text>`;
+  });
+  g+=`</svg>`;
+  // 최신 분기 카드 (개사)
+  if(F6CO!=='ALL' && co && co.quarters && co.quarters.length){
+    const q=co.quarters[co.quarters.length-1];
+    const f=v=>v===null||v===undefined?'—':(v<0?'-':'')+'$'+Math.abs(v)+'B';
+    g+=`<div class="f6-qcard">최근 분기 공시 FY${q.fy}Q${q.fq}${co.fyNote?' · '+co.fyNote:''} (접수 ${q.filed}) — OCF ${f(q.ocf)} · capex ${f(q.capex)} · FCF <b style="color:${q.fcf<0?'var(--down)':'var(--up)'}">${f(q.fcf)}</b> <span style="color:var(--petrol)">[SEC 공시]</span></div>`;
+  }
+  box.innerHTML=g;
+}
+
+function f6Pick(bi,di){
+  const ro=document.getElementById('ro6');
+  const KL={actual:'공시 실적',guide:'회사 가이던스',extrap:'공시 외삽',pending:'수집 예정'};
+  const {bars,dias}=f6Bars();
+  if(di>=0){
+    F6SEL={t:'dia',i:di}; f6Draw();
+    const m=dias[di];
+    ro.innerHTML=`<b>◇ ${m.target} ${m.year}년 ${m.metric} = ${m.value}B</b> ${m.note?'— '+m.note:''}
+      <div class="tagline"><span class="tag k">기관 전망</span><span class="tag">주체: ${m.org}</span>
+      <span class="tag">보도: ${m.pub}</span><span class="tag">수집: ${m.recDate}</span>
+      ${m.stale?'<span class="tag" style="color:#c9b18a;border-color:#c9b18a">구식 · 90일 경과</span>':''}
+      ${m.errPct!==undefined?`<span class="hit ${Math.abs(m.errPct)<5?'g':Math.abs(m.errPct)<15?'y':'r'}">실제 ${m.actual}B · 오차 ${m.errPct>0?'+':''}${m.errPct}%</span>`:''}</div>
+      <div style="font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:6px">기관 전망은 선·평균 없이 점으로만 둡니다 · 실적 확정 시 오차가 자동 표시됩니다 · 뉴스 수집 표본 기준</div>`;
+    return;
+  }
+  const b=bars[bi]; if(!b) return;
+  F6SEL={t:'bar',i:bi}; f6Draw();
+  if(b.kind==='pending'){
+    ro.innerHTML=`<b>${b.y}(E) — ${b.note||'수집 예정'}</b>
+      <div style="font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:6px">외삽 산식 = 최근 4개 분기 공시 합 × (1 + 공시 YoY 성장률) — 4분기 완비 시 자동 계산</div>`;
+    return;
+  }
+  let extra='';
+  // ⑤ 실적 연도 대조 표
+  if(b.kind==='actual'){
+    const target=F6CO, yr=b.year;
+    const rows=(F6.forecasts||[]).filter(f=>f.target===target&&f.year===yr&&f.metric==='capex'&&f.errPct!==undefined);
+    if(rows.length){
+      extra+=`<div class="cmp"><div class="ct">전망 vs 실적 대조 — 실적 확정 시 자동 계산</div>
+        <table><tr><th>당시 전망</th><th>주체 · 수집</th><th>오차</th></tr>`+
+        rows.map(c=>`<tr><td>${c.value}B</td><td>${c.org} · ${c.recDate}</td>
+          <td><span class="hit ${Math.abs(c.errPct)<5?'g':Math.abs(c.errPct)<15?'y':'r'}">${c.errPct>0?'+':''}${c.errPct}%</span></td></tr>`).join('')+
+        `</table><div style="font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:5px">※ 뉴스 수집 표본 기준</div></div>`;
+    }
+  }
+  // ② 가이던스 이력
+  if(b.kind==='guide'){
+    const hist=f6Guides(F6CO===('ALL')?'GOOGL':F6CO, b.year, 'capex');
+    if(F6CO!=='ALL' && hist.length>1){
+      extra+=`<div class="cmp" style="border-left-color:#5B958F"><div class="ct" style="color:#0E5F58">가이던스 갱신 이력 (append-only)</div>`+
+        hist.map(h=>`<div style="font-family:var(--mono);font-size:10.5px;color:var(--faint)">· ${h.value}B — ${h.pub} · 수집 ${h.recDate}</div>`).join('')+`</div>`;
+    }
+  }
+  ro.innerHTML=`<b>${b.y} ${b.v}B$</b> ${b.note?'— '+b.note:''}
+    <div class="tagline"><span class="tag k">${KL[b.kind]}</span><span class="tag">주체: ${b.org}</span>
+    <span class="tag">${b.kind==='extrap'?'':'발표: '}${b.pub}</span><span class="tag">수집: ${b.col}</span></div>`+extra;
+}
 function toggleStock(n){ stockOn[n]=!stockOn[n]; renderAll(); }
 function setAllStocks(on){ Object.keys(stockOn).forEach(n=>stockOn[n]=on); renderAll(); }
 async function loadTickerbar(force){
@@ -969,7 +1159,7 @@ async function refreshAll(){
     applyLatestBadge(); composeLede(); fitLede(); renderAll();
     await loadTickerbar(true);
     // 나머지는 이어서
-    await Promise.allSettled([ ensureDaily(true, true), loadDram(true), loadEvents(true) ]);
+    await Promise.allSettled([ ensureDaily(true, true), loadDram(true), loadEvents(true), loadFig06(true) ]);
     NEWS = null; if(TAB === 'news') loadNews(true);
     const t = new Date();
     const el = $('updatedText');
@@ -994,6 +1184,7 @@ async function refreshAll(){
   loadTickerbar();
   loadDram();
   loadEvents();
+  loadFig06();
   attachZoom('fig5');
   ensureDaily(true);           // 일별은 뒤에서 조용히 채움
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitLede);
