@@ -856,9 +856,9 @@ function f7Draw(){
     const krLast=((F7.kr&&F7.kr['SK하이닉스'])||[]).filter(r=>r.yoy!==null).sort((a,b)=>a.fy-b.fy||a.q-b.q).slice(-1)[0];
     const hyLast=((F7.hyper&&F7.hyper.annual)||[]).filter(a=>a.yoy!==null).slice(-1)[0];
     const smp={
-      mu:'<svg width="30" height="12" viewBox="0 0 30 12" style="vertical-align:-2px"><polyline points="1,9 10,7 20,5 29,2" fill="none" stroke="#B8891E" stroke-width="2.6"/><circle cx="20" cy="5" r="2.4" fill="#B8891E"/></svg>',
-      kr:'<svg width="30" height="12" viewBox="0 0 30 12" style="vertical-align:-2px"><polyline points="1,9 10,8 20,5 29,2" fill="none" stroke="#C8102E" stroke-width="2.4" stroke-dasharray="5 3"/><circle cx="20" cy="5" r="2.4" fill="#C8102E"/></svg>',
-      hyper:'<svg width="30" height="12" viewBox="0 0 30 12" style="vertical-align:-2px"><line x1="1" y1="6" x2="29" y2="6" stroke="#0E5F58" stroke-width="3"/></svg>'
+      mu:'<svg viewBox="0 0 30 12" style="width:30px;height:12px;display:inline-block;vertical-align:-2px"><polyline points="1,9 10,7 20,5 29,2" fill="none" stroke="#B8891E" stroke-width="2.6"/><circle cx="20" cy="5" r="2.4" fill="#B8891E"/></svg>',
+      kr:'<svg viewBox="0 0 30 12" style="width:30px;height:12px;display:inline-block;vertical-align:-2px"><polyline points="1,9 10,8 20,5 29,2" fill="none" stroke="#C8102E" stroke-width="2.4" stroke-dasharray="5 3"/><circle cx="20" cy="5" r="2.4" fill="#C8102E"/></svg>',
+      hyper:'<svg viewBox="0 0 30 12" style="width:30px;height:12px;display:inline-block;vertical-align:-2px"><line x1="1" y1="6" x2="29" y2="6" stroke="#0E5F58" stroke-width="3"/></svg>'
     };
     const st=k=>`cursor:pointer;user-select:none;${F7HL&&F7HL!==k?'opacity:.35;':''}${F7HL===k?'font-weight:800;':''}`;
     lgEl.innerHTML =
@@ -932,14 +932,15 @@ function f7Draw(){
     g+=`<line x1="${px}" y1="${py}" x2="${gx}" y2="${gy}" stroke="#B8891E" stroke-width="2" stroke-dasharray="3 5" opacity="${f7Op('mu')*0.8}"/>`;
     const sel=F7SEL&&F7SEL.t==='gd'&&F7SEL.i===gi;
     g+=`<circle cx="${gx}" cy="${gy}" r="${sel?8:5.5}" fill="var(--surface)" stroke="#B8891E" stroke-width="2.6" opacity="${f7Op('mu')}" ${sel?'stroke="#E8A317"':''} onclick="f7Pick(-3,${gi})" style="cursor:pointer"/>`;
-    g+=`<text class="axis" x="${Math.min(gx+4,R-8)}" y="${gy-12}" text-anchor="end" fill="#B8891E" font-weight="700" font-size="${MOB?24:13}" opacity="${f7Op('mu')}">+${gd.yoyE}%(E)</text>`;
+    g+=`<text class="axis" x="${Math.min(gx,R-8)}" y="${gy+30}" text-anchor="end" fill="#B8891E" font-weight="700" font-size="${MOB?24:13}" opacity="${f7Op('mu')}">가이던스 +${gd.yoyE}%(E)</text>`;
   });
   qs.forEach((q,i)=>{
     const sel=F7SEL&&F7SEL.t==='mu'&&F7SEL.i===i;
     g+=`<circle cx="${x(i)}" cy="${y(q.yoy)}" r="${sel?7:4.5}" fill="#B8891E" opacity="${f7Op('mu')}" ${sel?'stroke="#E8A317" stroke-width="3"':''} onclick="f7Pick(${i},-1)" style="cursor:pointer"/>`;
   });
   slots.forEach((s,i)=>{
-    if(i%2===0||i===slots.length-1||s.future) g+=`<text class="axis" x="${x(i)}" y="${B+26}" text-anchor="middle" ${s.future?'fill="#9AA0A6"':''}>${String(s.cy).slice(2)}Q${s.cq}${s.future?'(E)':''}</text>`;
+    if(s.future) g+=`<text class="axis" x="${x(i)}" y="${B+26}" text-anchor="middle" fill="#9AA0A6">Q${s.cq}E</text>`;
+    else if(i%2===0||i===slots.length-1) g+=`<text class="axis" x="${x(i)}" y="${B+26}" text-anchor="middle">${String(s.cy).slice(2)}Q${s.cq}</text>`;
   });
   g+=`</svg>`;
   box.innerHTML=g;
