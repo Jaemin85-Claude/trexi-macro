@@ -324,12 +324,7 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
     <h2>수요의 돈줄은 공급으로 언제 옮겨가나</h2>
   </div>
   <div class="desc">하이퍼스케일러 capex 성장률(수요·연간 수평선)과 마이크론 분기 매출 YoY(공급·선행 지표)를 겹칩니다. 환산 예측은 하지 않으며 방향 대조만 자동화합니다. 점을 누르면 출처가 표시됩니다.</div>
-  <div class="legend">
-    <span><span class="sw" style="width:18px;height:3px;background:#B8891E"></span>마이크론 매출 YoY <em>분기·선행</em></span>
-    <span><span class="sw" style="width:18px;height:3px;background:#0E5F58"></span>하이퍼 capex YoY <em>연간 수평선</em></span>
-    <span><span class="sw" style="width:18px;height:3px;background:repeating-linear-gradient(90deg,#C8102E 0 5px,transparent 5px 9px)"></span>SK하이닉스 매출 YoY <em>분기·DART</em></span>
-    <span style="font-family:var(--mono);font-size:10px;color:var(--faint)">삼성 DS부문: 실적발표 시딩 예정(전사 혼재 제외)</span>
-  </div>
+  <div class="legend" id="lg7fig"></div>
   <div id="fig7box"><div class="err">전이 데이터를 불러오는 중입니다…</div></div>
   <div class="sig7" id="sig7"></div>
   <div class="readout" id="ro7" style="white-space:normal">점을 누르면 해당 분기의 수치·출처가 표시됩니다.</div>
@@ -851,6 +846,17 @@ async function loadFig07(force){
 }
 function f7Draw(){
   const box=document.getElementById('fig7box');
+  const lgEl=document.getElementById('lg7fig');
+  if(lgEl && F7){
+    const muLast=((F7.mu&&F7.mu.quarters)||[]).filter(q=>q.yoy!==null).slice(-1)[0];
+    const krLast=((F7.kr&&F7.kr['SK하이닉스'])||[]).filter(r=>r.yoy!==null).sort((a,b)=>a.fy-b.fy||a.q-b.q).slice(-1)[0];
+    const hyLast=((F7.hyper&&F7.hyper.annual)||[]).filter(a=>a.yoy!==null).slice(-1)[0];
+    lgEl.innerHTML =
+      `<span><span class="sw" style="width:18px;height:3px;background:#B8891E"></span>마이크론 <b>${muLast?(muLast.yoy>=0?'+':'')+muLast.yoy+'%':'—'}</b> <em>실선·선행</em></span>
+       <span><span class="sw" style="width:18px;height:3px;background:repeating-linear-gradient(90deg,#C8102E 0 6px,transparent 6px 10px)"></span>SK하이닉스 <b>${krLast?(krLast.yoy>=0?'+':'')+krLast.yoy+'%':'수집 대기'}</b> <em>적색 점선·DART</em></span>
+       <span><span class="sw" style="width:18px;height:3px;background:#0E5F58"></span>하이퍼 capex <b>${hyLast?'+'+hyLast.yoy+'%'+(hyLast.kind==='guide'?'(E)':''):'—'}</b> <em>수평선·연간</em></span>
+       <span style="font-family:var(--mono);font-size:10px;color:var(--faint)">삼성 DS부문: 시딩 예정</span>`;
+  }
   if(!F7 || !F7.mu || F7.mu.err){ box.innerHTML='<div class="err">마이크론 수집 실패'+(F7&&F7.mu&&F7.mu.err?': '+F7.mu.err:'')+'</div>'; return; }
   const qs=(F7.mu.quarters||[]).filter(q=>q.yoy!==null).slice(-10);
   if(!qs.length){ box.innerHTML='<div class="err">YoY 계산 가능한 분기가 아직 없습니다</div>'; return; }
@@ -881,8 +887,11 @@ function f7Draw(){
   kr.forEach(r=>{ if(r.yoy===null) return;
     const i=qs.findIndex(q=>q.cy===r.fy && q.cq===r.q);
     if(i>=0) krPts.push({i, yoy:r.yoy, r}); });
-  if(krPts.length>1){
+  if(krPts.length>1)
     g+=`<polyline points="${krPts.map(p=>x(p.i)+','+y(p.yoy)).join(' ')}" fill="none" stroke="#C8102E" stroke-width="2.4" stroke-dasharray="7 5"/>`;
+  if(krPts.length){
+    const kl=krPts[krPts.length-1];
+    g+=`<text class="axis" x="${Math.min(x(kl.i)+8,R-150)}" y="${y(kl.yoy)+20}" fill="#C8102E" font-weight="700" font-size="${MOB?26:14}">하이닉스 ${kl.yoy>=0?'+':''}${kl.yoy}%</text>`;
   }
   krPts.forEach((p,k)=>{
     const sel=F7SEL&&F7SEL.t==='kr'&&F7SEL.i===k;
@@ -890,6 +899,8 @@ function f7Draw(){
   });
   // MU 선
   g+=`<polyline points="${qs.map((q,i)=>x(i)+','+y(q.yoy)).join(' ')}" fill="none" stroke="#B8891E" stroke-width="2.8"/>`;
+  const ml=qs[qs.length-1];
+  g+=`<text class="axis" x="${x(qs.length-1)+8}" y="${y(ml.yoy)-10}" fill="#B8891E" font-weight="700" font-size="${MOB?26:14}">MU ${ml.yoy>=0?'+':''}${ml.yoy}%</text>`;
   qs.forEach((q,i)=>{
     const sel=F7SEL&&F7SEL.t==='mu'&&F7SEL.i===i;
     g+=`<circle cx="${x(i)}" cy="${y(q.yoy)}" r="${sel?7:4.5}" fill="#B8891E" ${sel?'stroke="#E8A317" stroke-width="3"':''} onclick="f7Pick(${i},-1)" style="cursor:pointer"/>`;
@@ -1093,11 +1104,11 @@ function f6Draw(){
   // 2026 캘린더 분기 트래커 — 확정 발표분 + 예정
   if(F6CO!=='ALL' && co && co.cal2026){
     const cq={}; co.cal2026.forEach(q=>cq[q.cq]=q);
-    g+=`<div class="f6-qcard" style="border-left-color:#5B958F"><b style="color:var(--ink)">2026년 분기 트래커 (캘린더 기준)</b> — `+
+    g+=`<div class="f6-qcard" style="border-left-color:#5B958F"><b style="color:var(--ink)">2026년 분기 트래커 (캘린더 기준)</b> <span style="font-size:10px">— SEC 정식 접수(10-Q/10-K) 기준 · 실적 발표(보도자료)와 접수 시점은 다를 수 있음</span> — `+
       [1,2,3,4].map(n=>{
         const q=cq[n];
         if(q) return `<span style="color:var(--ink)">Q${n} capex $${q.capex}B${q.fcf!==null?' · FCF '+(q.fcf<0?'-':'')+'$'+Math.abs(q.fcf)+'B':''} <span style="color:var(--petrol)">[확정 ${q.src}]</span></span>`;
-        return `<span>Q${n} 예정(미발표)</span>`;
+        return `<span>Q${n} 공시 접수 대기</span>`;
       }).join(' &nbsp;|&nbsp; ')+`</div>`;
   }
   // 최신 분기 카드 (개사)
