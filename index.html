@@ -260,7 +260,7 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
 
 <section>
   <div class="sec-head">
-    <span class="fig">FIG. 01 · 지수</span>
+    <div class="figrow"><span class="fig">FIG. 01 · 지수</span><span class="asof" id="asof1"></span></div>
     <h2 id="t1">지수는 지금 어디에 서 있나</h2>
   </div>
   <div class="desc">구간 시작 시점을 100으로 맞춘 상대 성과. 위쪽 핀은 매크로 이벤트이고, 누르면 아래 차트들이 함께 표시됩니다.</div>
@@ -272,7 +272,7 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
 
 <section>
   <div class="sec-head">
-    <span class="fig">FIG. 02 · 종목</span>
+    <div class="figrow"><span class="fig">FIG. 02 · 종목</span><span class="asof" id="asof2"></span></div>
     <h2 id="t2">누가 지수를 끌었나</h2>
   </div>
   <div class="desc row">
@@ -289,7 +289,7 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
 
 <section>
   <div class="sec-head">
-    <span class="fig">FIG. 03 · 수출 × 주가</span>
+    <div class="figrow"><span class="fig">FIG. 03 · 수출 × 주가</span><span class="asof" id="asof3"></span></div>
     <h2 id="t3">수출과 주가는 같이 가고 있나</h2>
   </div>
   <div class="desc">막대는 월별 반도체 수출액(관세청 발표 기준), 금색 선은 메모리(HS854232), 오른쪽 축의 점선은 삼성전자·SK하이닉스 주가입니다.</div>
@@ -299,7 +299,7 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
 
 <section>
   <div class="sec-head">
-    <span class="fig">FIG. 05 · 가격</span>
+    <div class="figrow"><span class="fig">FIG. 05 · 가격</span><span class="asof" id="asof5"></span></div>
     <h2 id="t5">메모리 가격은 어디쯤인가</h2>
   </div>
   <div class="desc">월별 고정거래가 기준(TrendForce·D램익스체인지 공개 자료). 계약가는 월 단위, 스팟은 일 단위로 고시되어 실시간 시세가 아닙니다.</div>
@@ -310,7 +310,7 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
 
 <section>
   <div class="sec-head">
-    <span class="fig">FIG. 06 · 현금흐름</span>
+    <div class="figrow"><span class="fig">FIG. 06 · 현금흐름</span><span class="asof" id="asof6"></span></div>
     <h2>하이퍼스케일러는 언제까지 쓸 수 있나</h2>
   </div>
   <div class="desc">연간 capex(십억$). 진한색=SEC 공시 확정, 중간색=회사 가이던스, 점선=수집 예정·외삽(E), ◇=기관 전망. 막대와 ◇를 누르면 출처 꼬리표·전망 대조가 표시됩니다.</div>
@@ -329,7 +329,7 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
 
 <section>
   <div class="sec-head">
-    <span class="fig">FIG. 07 · 전이</span>
+    <div class="figrow"><span class="fig">FIG. 07 · 전이</span><span class="asof" id="asof7"></span></div>
     <h2>수요의 돈줄은 공급으로 언제 옮겨가나</h2>
   </div>
   <div class="desc">하이퍼스케일러 capex 성장률(수요·연간 수평선)과 마이크론 분기 매출 YoY(공급·선행 지표)를 겹칩니다. 환산 예측은 하지 않으며 방향 대조만 자동화합니다. 점을 누르면 출처가 표시됩니다.</div>
@@ -341,7 +341,7 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
 
 <section>
   <div class="sec-head">
-    <span class="fig">FIG. 08 · 수급</span>
+    <div class="figrow"><span class="fig">FIG. 08 · 수급</span><span class="asof" id="asof8"></span></div>
     <h2>누가 사고 누가 팔았나</h2>
   </div>
   <div class="desc">전일 마감 확정 순매수(억원). 막대 = 개인·기관·외국인, 선 = 외국인 누적(표시 구간 첫 거래일부터). 막대를 누르면 상세·출처가 표시됩니다.</div>
@@ -353,7 +353,7 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
     <input type="date" id="cal8" style="font-family:var(--mono);font-size:13px;padding:7px 9px;border:1px solid var(--rule-2);border-radius:2px;background:var(--surface)" onchange="cal8Pick(this.value)">
   </div>
   <div id="calCard8"></div>
-  <div class="legend" id="lg8s"></div>
+  <div class="legend" id="lg8s" style="margin-bottom:8px"></div>
   <div id="fig8box"><div class="err">수급 데이터를 불러오는 중입니다…</div></div>
   <div id="tbl8"></div>
   <div class="readout" id="ro8" style="white-space:normal">막대를 누르면 해당 기간의 3주체 수급과 출처가 표시됩니다.</div>
@@ -504,7 +504,7 @@ function drawLineChart(elId, seriesList, keys, opts={}){
     const lastEdge = i===keys.length-1 && x(i) > W-R-(MOB?90:44);   // 우측 끝 잘림 방지
     g += `<text class="axis" x="${lastEdge?Math.min(x(i)+12,W-4):x(i)}" y="${H-12}" text-anchor="${lastEdge?'end':'middle'}">${keyLabel(m)}</text>`;
   }});
-  if(opts.asof) g += `<text class="axis" x="${W-4}" y="${MOB?30:18}" text-anchor="end" fill="#B9BDC2" font-size="${MOB?22:11}">${opts.asof}</text>`;
+  if(opts.asof && opts.asofEl){ const ae=document.getElementById(opts.asofEl); if(ae) ae.textContent=opts.asof; }
   // 선택 이벤트 하이라이트 밴드
   if(selEvt){
     const ev = EVENTS.find(e=>e.num===selEvt);
@@ -613,7 +613,7 @@ function renderAll(){
       (nS.length ? `<span class="lg">${swHtml(PAL.nasdaq,true)}NASDAQ${lgVal(nS,2)}</span>` : '');
     const series = [{data:normalize(kS),color:PAL.kospi},{data:normalize(sS),color:PAL.spx,dash:'6 5'}];
     if(nS.length) series.push({data:normalize(nS),color:PAL.nasdaq,dash:'2 4'});
-    drawLineChart('fig1', series, keys,{pins:true, asof:'기준 '+keyLabel(keys[keys.length-1])+(DATA.stocks&&DATA.stocks.updated?' · 수집 '+String(DATA.stocks.updated).slice(5,16):'')});
+    drawLineChart('fig1', series, keys,{pins:true, asof:'기준 '+keyLabel(keys[keys.length-1])+(DATA.stocks&&DATA.stocks.updated?' · 수집 '+String(DATA.stocks.updated).slice(5,16):''), asofEl:'asof1'});
   } else drawLineChart('fig1',[],[],{errMsg: dm && !DAILY_LOADED ? '일별 데이터를 불러오는 중입니다.' : '지수 데이터를 받지 못했습니다. 새로고침하면 다시 시도합니다.'});
 
   // FIG.02
@@ -630,7 +630,7 @@ function renderAll(){
     if(act.length){
       const keys = keys2;
       const cut = s => s.filter(p=>keys.includes(p.k));
-      drawLineChart('fig2', act.map(n=>({data:normalize(cut(sf(stSrc[n],'close',kname))),color:STOCK_COLORS[n]||PAL.muted})), keys,{pins:true, asof:'기준 '+keyLabel(keys[keys.length-1])+(DATA.stocks&&DATA.stocks.updated?' · 수집 '+String(DATA.stocks.updated).slice(5,16):'')});
+      drawLineChart('fig2', act.map(n=>({data:normalize(cut(sf(stSrc[n],'close',kname))),color:STOCK_COLORS[n]||PAL.muted})), keys,{pins:true, asof:'기준 '+keyLabel(keys[keys.length-1])+(DATA.stocks&&DATA.stocks.updated?' · 수집 '+String(DATA.stocks.updated).slice(5,16):''), asofEl:'asof2'});
     } else $('fig2').innerHTML='<div class="err">범례에서 종목을 선택하세요</div>';
   } else drawLineChart('fig2',[],[],{errMsg: dm && !DAILY_LOADED ? '일별 데이터를 불러오는 중입니다.' : '종목 데이터를 받지 못했습니다. 새로고침하면 다시 시도합니다.'});
 
@@ -671,7 +671,7 @@ function renderFig3(){
     $('lg3').innerHTML = `<span class="lg"><span class="sw sw-bar" style="background:${PAL.exp}"></span>반도체 수출${eok(lastV(semi))} <em>좌축·막대</em></span>
       <span class="lg">${swHtml(PAL.mem)}메모리 HS854232${eok(lastV(mem))} <em>좌축·선</em></span>` + lgX;
     drawLineChart('fig3',[{data:mem,color:PAL.mem}],keys,
-      {bars:{data:semi,color:PAL.exp}, rSeries:rS, rAxis:rS.length>0, h:420, pins:true, asof:'기준 '+keyLabel(keys[keys.length-1])+(ex.updated?' · 수집 '+String(ex.updated).slice(5,16):'')});
+      {bars:{data:semi,color:PAL.exp}, rSeries:rS, rAxis:rS.length>0, h:420, pins:true, asof:'기준 '+keyLabel(keys[keys.length-1])+(ex.updated?' · 수집 '+String(ex.updated).slice(5,16):''), asofEl:'asof3'});
   } else drawLineChart('fig3',[],[],{errMsg:'수출 데이터 연결 실패'});
 }
 
@@ -861,7 +861,7 @@ function renderDram(){
     left.map(s=>({data:s.points.map(p=>({k:p.ym,v:p.v})),color:cmap[s.color]})),
     yms,
     { rSeries: right.map(s=>({data:s.points.map(p=>({k:p.ym,v:p.v})),color:cmap[s.color],dash:'6 5'})),
-      rAxis:true, h:400, asof:'기준 '+keyLabel(yms[yms.length-1])+(DRAM.updated?' · 수집 '+String(DRAM.updated).slice(5,16):'') });
+      rAxis:true, h:400, asof:'기준 '+keyLabel(yms[yms.length-1])+(DRAM.updated?' · 수집 '+String(DRAM.updated).slice(5,16):''), asofEl:'asof5' });
   const dn = DRAM.daily && DRAM.daily.length;
   document.getElementById('ro5').innerHTML =
     (DRAM.seed.outlook||[]).map(o=>'· '+o).join('<br>') +
@@ -897,7 +897,7 @@ function f8Series(){  // 기간 탭에 따른 {labels, ind, inst, forg, iso[]}
   if(!tgt || !tgt.daily || !tgt.daily.length) return null;
   const D=tgt.daily;
   if(P8==='d'){
-    const a=D.slice(-20);
+    const a=D.slice(MOB?-10:-20);
     return {labels:a.map(r=>r.d.slice(5).replace('-','/')), iso:a.map(r=>r.d),
       ind:a.map(r=>r.ind), inst:a.map(r=>r.inst), forg:a.map(r=>r.forg), src:tgt.src};
   }
@@ -919,6 +919,7 @@ function f8Draw(){
   const s=f8Series();
   if(!s){ box.innerHTML='<div class="err">'+T8+' — 수집된 데이터가 아직 없습니다</div>'; document.getElementById('sum8').innerHTML=''; return; }
   const li=s.labels.length-1;
+  const a8=document.getElementById('asof8'); if(a8) a8.textContent='확정 '+(s.iso[li]||'').slice(5).replace('-','/')+' · 수집 '+(F8.updated||'').slice(5,16);
   document.getElementById('sum8').innerHTML=
     [['개인',s.ind[li]],['기관',s.inst[li]],['외국인',s.forg[li]]].map(([n,v])=>
      `<div><div class="sn">${P8==='d'?'전일('+s.iso[li].slice(5)+')':'최근 '+({'m':'월','y':'연'}[P8]||'')} ${n}</div>
@@ -934,14 +935,13 @@ function f8Draw(){
   const D=F8.targets[T8].daily;
   if(calEl&&D.length){ calEl.min=D[0].d; calEl.max=D[D.length-1].d; if(!calEl.value) calEl.value=D[D.length-1].d; }
 
-  const W=980,H=360,L=70,B=300,T=30,Rr=950;
+  const W=980,H=372,L=70,B=312,T=46,Rr=950;
   const cum=[]; let c=0; s.forg.forEach(v=>{c+=v;cum.push(c);});
   const all=[...s.ind,...s.inst,...s.forg,...(CUM8?cum:[]),0];
   const lo=Math.min(...all), hi=Math.max(...all);
   const y=v=>B-(v-lo)/(hi-lo||1)*(B-T);
   const n=s.labels.length, gw=(Rr-L)/n, bw=Math.min(16,gw/4.6);
   let g=`<svg class="${MOB?'mob':''}" viewBox="0 0 ${W} ${H}">`;
-  g+=`<text class="axis" x="${W-6}" y="${MOB?26:18}" text-anchor="end" fill="#B9BDC2" font-size="${MOB?22:11}">확정 ${(s.iso[li]||'').slice(5)} · 수집 ${(F8.updated||'').slice(5,16)}</text>`;
   [lo,0,hi].forEach(v=>{
     g+=`<line x1="${L}" y1="${y(v)}" x2="${Rr}" y2="${y(v)}" class="gline" ${v===0?'stroke="#D2CFC7"':''}/>`;
     g+=`<text class="axis" x="${L-7}" y="${y(v)+5}" text-anchor="end">${v===0?'0':f8Fmt(v).replace('+','')}</text>`;
@@ -953,14 +953,14 @@ function f8Draw(){
       const bx=cx+off*bw*1.25-bw/2, y0=y(0), y1=y(v);
       g+=`<rect x="${bx}" y="${Math.min(y0,y1)}" width="${bw}" height="${Math.max(Math.abs(y0-y1),1.5)}" fill="${col}" opacity="${v>=0?1:0.55}" ${sel?'stroke="#E8A317" stroke-width="2.5"':''} onclick="f8Pick(${i})" style="cursor:pointer"/>`;
     });
-    if(n<=6||i%2===0||i===n-1){
+    if(n<=6||(i%2===0&&i<n-2)||i===n-1){
       const lastL=i===n-1;
       g+=`<text class="axis" x="${lastL?Math.min(cx+10,W-4):cx}" y="${B+24}" text-anchor="${lastL&&cx>W-90?'end':'middle'}">${lb}</text>`;
     }
   });
   if(CUM8){
     g+=`<polyline points="${cum.map((v,i)=>(L+gw*i+gw/2)+','+y(v)).join(' ')}" fill="none" stroke="#0E5F58" stroke-width="2.6" opacity=".9"/>`;
-    g+=`<text class="axis" x="${Math.min(L+gw*(n-1)+gw/2,Rr-8)}" y="${y(cum[n-1])-12}" text-anchor="end" fill="#0E5F58" font-weight="700">누적 ${f8Fmt(cum[n-1])}</text>`;
+    g+=`<text class="axis" x="${Rr-4}" y="${T-8}" text-anchor="end" fill="#0E5F58" font-weight="700">외국인 누적 ${f8Fmt(cum[n-1])}</text>`;
   }
   g+=`</svg>`;
   box.innerHTML=g;
@@ -1009,6 +1009,7 @@ function f7Op(k){ return F7HL===null ? 1 : (F7HL===k ? 1 : 0.22); }
 function f7Wd(k,base){ return F7HL===k ? base+2 : base; }
 function f7Draw(){
   const box=document.getElementById('fig7box');
+  const a7=document.getElementById('asof7'); if(a7&&F7) a7.textContent='수집 '+(F7.updated||'').slice(5,16);
   const lgEl=document.getElementById('lg7fig');
   if(lgEl && F7){
     const muLast=((F7.mu&&F7.mu.quarters)||[]).filter(q=>q.yoy!==null).slice(-1)[0];
@@ -1050,7 +1051,6 @@ function f7Draw(){
   const y=v=>B-(v-vmin)/(vmax-vmin)*(B-T);
   const x=i=>L+i*(R-L)/Math.max(slots.length-1,1);
   let g=`<svg class="${MOB?'mob':''}" viewBox="0 0 ${W} ${H}">`;
-  g+=`<text class="axis" x="${W-6}" y="${MOB?28:16}" text-anchor="end" fill="#B9BDC2" font-size="${MOB?22:11}">수집 ${(F7.updated||'').slice(5,16)}</text>`;
   [vmin,0,vmax*0.5,vmax].forEach(v=>{
     g+=`<line x1="${L}" y1="${y(v)}" x2="${R}" y2="${y(v)}" class="gline" ${v===0?'stroke="#D2CFC7"':''}/>`;
     g+=`<text class="axis" x="${L-7}" y="${y(v)+5}" text-anchor="end">${Math.round(v)}%</text>`;
@@ -1259,6 +1259,7 @@ function f6Bars(){
 
 function f6Draw(){
   const box=document.getElementById('fig6box');
+  const a6=document.getElementById('asof6'); if(a6&&F6) a6.textContent='수집 '+(F6.updated||'').slice(5,16);
   if(!F6 || !F6.companies){ box.innerHTML='<div class="err">데이터 없음</div>'; return; }
   const co=F6.companies[F6CO];
   if(F6CO!=='ALL' && co && co.err){ box.innerHTML='<div class="err">'+co.name+' 수집 실패: '+co.err+'</div>'; return; }
@@ -1269,7 +1270,6 @@ function f6Draw(){
   const y=v=>B-(v/vmax)*(B-T);
   const KC={actual:'#0E5F58',guide:'#5B958F',extrap:'#BDD5D1'};
   let g=`<svg class="${MOB?'mob':''}" viewBox="0 0 ${W} ${H}">`;
-  g+=`<text class="axis" x="${W-6}" y="${MOB?28:16}" text-anchor="end" fill="#B9BDC2" font-size="${MOB?22:11}">수집 ${(F6.updated||'').slice(5,16)}</text>`;
   [0,.33,.66,1].forEach(f=>{const vy=y(vmax*f);
     g+=`<line x1="${L}" y1="${vy}" x2="${W-14}" y2="${vy}" class="gline"/>`;
     g+=`<text class="axis" x="${L-7}" y="${vy+5}" text-anchor="end">${Math.round(vmax*f)}</text>`;});
