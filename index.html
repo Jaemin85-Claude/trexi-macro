@@ -924,15 +924,25 @@ function f8Draw(){
   const perLbl = P8==='d' ? '전일('+s.iso[li].slice(5)+')'
     : P8==='m' ? s.iso[li].replace('-','.')+(s.ranges?' ('+s.ranges[li].split('~')[0]+'~'+s.ranges[li].split('~')[1]+')':'')
     : s.iso[li]+'년 누적'+(s.ranges?' ('+s.ranges[li]+')':'');
-  document.getElementById('sum8').innerHTML=
-    [['개인',s.ind[li]],['기관',s.inst[li]],['외국인',s.forg[li]]].map(([n,v])=>
+  let sumHtml=[['개인',s.ind[li]],['기관',s.inst[li]],['외국인',s.forg[li]]].map(([n,v])=>
      `<div><div class="sn">${perLbl} ${n}</div>
       <div class="sv" style="color:${v>=0?'var(--up)':'var(--down)'}">${f8Fmt(v)}</div></div>`).join('');
+  // 종목: 외국인 보유율 칸 (최신 + 전일비)
+  const holds=(F8.targets[T8].daily||[]).filter(r=>r.hold!==null&&r.hold!==undefined);
+  if(holds.length){
+    const h=holds[holds.length-1], hp=holds.length>1?holds[holds.length-2]:null;
+    const dchg=hp?Math.round((h.hold-hp.hold)*100)/100:null;
+    sumHtml+=`<div><div class="sn">외국인 보유율 (${h.d.slice(5)})</div>
+      <div class="sv">${h.hold}%${dchg!==null?` <span style="font-size:11px;color:${dchg>=0?'var(--up)':'var(--down)'}">${dchg>=0?'+':''}${dchg}%p</span>`:''}</div></div>`;
+    document.getElementById('sum8').style.gridTemplateColumns='repeat(4,1fr)';
+  } else document.getElementById('sum8').style.gridTemplateColumns='repeat(3,1fr)';
+  document.getElementById('sum8').innerHTML=sumHtml;
   document.getElementById('lg8s').innerHTML=
     `<span><span class="sw" style="background:#6B6F76;width:11px;height:11px"></span>개인</span>
      <span><span class="sw" style="background:#B8891E;width:11px;height:11px"></span>기관</span>
      <span><span class="sw" style="background:#0E5F58;width:11px;height:11px"></span>외국인</span>
      ${CUM8?'<span><svg viewBox="0 0 30 12" style="width:30px;height:12px;display:inline-block;vertical-align:-2px"><polyline points="1,9 15,6 29,3" fill="none" stroke="#0E5F58" stroke-width="2.4"/></svg> 외국인 누적('+(s.iso[0]||'').slice(5)+'~)</span>':''}
+     ${(P8==='d'&&(F8.targets[T8].daily||[]).some(r=>r.hold!=null))?'<span><svg viewBox="0 0 30 12" style="width:30px;height:12px;display:inline-block;vertical-align:-2px"><polyline points="1,7 15,6 29,4" fill="none" stroke="#16509B" stroke-width="2" stroke-dasharray="2 3"/></svg> 외국인 보유율(자체 스케일)</span>':''}
      <span style="font-family:var(--mono);font-size:10px;color:var(--faint)">${T8==='KOSPI'||T8==='KOSDAQ'?'억원 · 연초 소급':'억원 · 수량×종가 근사 · '+((F8.targets[T8].daily[0]||{}).d||'')+'부터 누적 중'}</span>`;
   // 캘린더 범위
   const calEl=document.getElementById('cal8');
@@ -965,6 +975,17 @@ function f8Draw(){
   if(CUM8){
     g+=`<polyline points="${cum.map((v,i)=>(L+gw*i+gw/2)+','+y(v)).join(' ')}" fill="none" stroke="#0E5F58" stroke-width="2.6" opacity=".9"/>`;
     g+=`<text class="axis" x="${Rr-4}" y="${T-8}" text-anchor="end" fill="#0E5F58" font-weight="700">외국인 누적 ${f8Fmt(cum[n-1])}</text>`;
+  }
+  // 외국인 보유율 선 (종목·일 탭) — 자체 스케일, 옅은 청색
+  if(P8==='d'){
+    const hp=s.iso.map((d2,i)=>{ const r=(F8.targets[T8].daily||[]).find(x=>x.d===d2); return r&&r.hold!=null?{i,h:r.hold}:null; }).filter(Boolean);
+    if(hp.length>1){
+      const hmin=Math.min(...hp.map(p=>p.h)), hmax=Math.max(...hp.map(p=>p.h));
+      const hy=v=>B-((v-hmin)/((hmax-hmin)||1))*(B-T)*0.85 - (B-T)*0.05;
+      g+=`<polyline points="${hp.map(p=>(L+gw*p.i+gw/2)+','+hy(p.h)).join(' ')}" fill="none" stroke="#16509B" stroke-width="2" stroke-dasharray="2 4" opacity=".75"/>`;
+      const hl=hp[hp.length-1];
+      g+=`<text class="axis" x="${Rr-4}" y="${T+14}" text-anchor="end" fill="#16509B" opacity=".85">보유율 ${hl.h}%</text>`;
+    }
   }
   g+=`</svg>`;
   box.innerHTML=g;
