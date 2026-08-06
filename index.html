@@ -162,6 +162,15 @@ svg.mob .axis{font-size:27px}
 .sig7 .sd{font-size:11px;color:var(--muted);margin-top:2px}
 .sig7 .warn7{background:#FFF3E0;border-left:3px solid #E8A317}
 @media(max-width:560px){.sig7{grid-template-columns:1fr}}
+.sum8{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);margin:10px 0 4px}
+.sum8>div{background:var(--surface-2);padding:9px 11px;min-width:0}
+.sum8 .sn{font-family:var(--mono);font-size:10px;color:var(--faint)}
+.sum8 .sv{font-family:var(--mono);font-size:15px;font-weight:700;margin-top:1px}
+#tbl8 table{width:100%;border-collapse:collapse;margin-top:8px;font-size:11.5px;font-family:var(--mono)}
+#tbl8 th,#tbl8 td{border-bottom:1px solid var(--rule);padding:6px 5px;text-align:right;white-space:nowrap}
+#tbl8 th{font-size:10px;color:var(--faint);font-weight:500}
+#tbl8 td:first-child,#tbl8 th:first-child{text-align:left}
+.calcard8{border:1px solid var(--rule);border-left:3px solid var(--petrol);background:var(--surface-2);padding:9px 12px;margin-top:8px;font-size:12.5px}
 .f6-qcard{font-family:var(--mono);font-size:11px;color:var(--faint);border:1px solid var(--rule);border-left:3px solid var(--petrol);padding:8px 11px;margin-top:7px;background:var(--surface-2);line-height:1.8}
 .art-link{display:inline-block;margin-top:10px;font-size:var(--fs-sm);font-weight:600;color:var(--petrol);text-decoration:none}
 .art-link:hover{text-decoration:underline}
@@ -328,6 +337,26 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
   <div id="fig7box"><div class="err">전이 데이터를 불러오는 중입니다…</div></div>
   <div class="sig7" id="sig7"></div>
   <div class="readout" id="ro7" style="white-space:normal">점을 누르면 해당 분기의 수치·출처가 표시됩니다.</div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <span class="fig">FIG. 08 · 수급</span>
+    <h2>누가 사고 누가 팔았나</h2>
+  </div>
+  <div class="desc">전일 마감 확정 순매수(억원). 막대 = 개인·기관·외국인, 선 = 외국인 누적(표시 구간 첫 거래일부터). 막대를 누르면 상세·출처가 표시됩니다.</div>
+  <div class="ev-filters" id="tgt8Tabs"></div>
+  <div class="ev-filters" id="per8Tabs" style="margin-top:2px"></div>
+  <div class="sum8" id="sum8"></div>
+  <div style="display:flex;gap:8px;align-items:center;margin:8px 0 2px;flex-wrap:wrap">
+    <label style="font-family:var(--mono);font-size:11px;color:var(--faint)">특정일 조회</label>
+    <input type="date" id="cal8" style="font-family:var(--mono);font-size:13px;padding:7px 9px;border:1px solid var(--rule-2);border-radius:2px;background:var(--surface)" onchange="cal8Pick(this.value)">
+  </div>
+  <div id="calCard8"></div>
+  <div class="legend" id="lg8s"></div>
+  <div id="fig8box"><div class="err">수급 데이터를 불러오는 중입니다…</div></div>
+  <div id="tbl8"></div>
+  <div class="readout" id="ro8" style="white-space:normal">막대를 누르면 해당 기간의 3주체 수급과 출처가 표시됩니다.</div>
 </section>
 
 <section id="evtSection">
@@ -837,6 +866,129 @@ function renderDram(){
 }
 let F6=null, F6CO='ALL', F6SEL=null;
 let F7=null, F7SEL=null;
+let F8=null, T8='KOSPI', P8='d', SEL8=null, CUM8=true, TBL8=false;
+const T8NAMES={KOSPI:'KOSPI',KOSDAQ:'KOSDAQ','삼성전자':'삼성전자','SK하이닉스':'SK하이닉스','삼성전기':'삼성전기'};
+async function loadFig08(force){
+  try{
+    const r = await fetch(API.replace('type=all','type=fig08') + (force?'&nocache=1':''));
+    F8 = await r.json();
+    f8Tabs(); f8Draw();
+  }catch(e){ document.getElementById('fig8box').innerHTML='<div class="err">수급 데이터를 받지 못했습니다. 새로 받기로 재시도해 주세요.</div>'; }
+}
+function f8Tabs(){
+  document.getElementById('tgt8Tabs').innerHTML = Object.keys(T8NAMES).map(k=>
+    `<button class="fbtn ${T8===k?'on':''}" onclick="f8SetT('${k}')">${T8NAMES[k]}</button>`).join('');
+  document.getElementById('per8Tabs').innerHTML =
+    [['d','일'],['m','월'],['y','연']].map(([k,n])=>`<button class="fbtn ${P8===k?'on':''}" style="padding:6px 11px;min-height:32px" onclick="f8SetP('${k}')">${n}</button>`).join('')
+    + `<button class="fbtn ${CUM8?'on':''}" style="padding:6px 11px;min-height:32px" onclick="CUM8=!CUM8;f8Draw()">외국인 누적선</button>`
+    + `<button class="fbtn ${TBL8?'on':''}" style="padding:6px 11px;min-height:32px" onclick="TBL8=!TBL8;f8Draw()">표로 보기</button>`;
+}
+function f8SetT(k){T8=k;SEL8=null;f8Tabs();f8Draw();f8Ro();}
+function f8SetP(k){P8=k;SEL8=null;f8Tabs();f8Draw();f8Ro();}
+function f8Ro(){document.getElementById('ro8').innerHTML='막대를 누르면 해당 기간의 3주체 수급과 출처가 표시됩니다.';}
+function f8Fmt(v){ if(v===null||v===undefined||isNaN(v)) return '—';
+  const a=Math.abs(v); return (v<0?'-':'+')+(a>=10000?(a/10000).toFixed(1)+'조':Math.round(a).toLocaleString()+'억'); }
+
+function f8Series(){  // 기간 탭에 따른 {labels, ind, inst, forg, iso[]}
+  const tgt=F8&&F8.targets&&F8.targets[T8];
+  if(!tgt || !tgt.daily || !tgt.daily.length) return null;
+  const D=tgt.daily;
+  if(P8==='d'){
+    const a=D.slice(-20);
+    return {labels:a.map(r=>r.d.slice(5).replace('-','/')), iso:a.map(r=>r.d),
+      ind:a.map(r=>r.ind), inst:a.map(r=>r.inst), forg:a.map(r=>r.forg), src:tgt.src};
+  }
+  const key = P8==='m' ? (d=>d.slice(0,7)) : (d=>d.slice(0,4));
+  const agg={};
+  D.forEach(r=>{ const k=key(r.d);
+    if(!agg[k]) agg[k]={ind:0,inst:0,forg:0,n:0,from:r.d,to:r.d};
+    agg[k].ind+=r.ind; agg[k].inst+=r.inst; agg[k].forg+=r.forg; agg[k].n++;
+    if(r.d<agg[k].from)agg[k].from=r.d; if(r.d>agg[k].to)agg[k].to=r.d; });
+  const ks=Object.keys(agg).sort().slice(P8==='m'?-12:-4);
+  return {labels:ks.map(k=>P8==='m'?k.slice(2).replace('-','.'):k), iso:ks,
+    ind:ks.map(k=>agg[k].ind), inst:ks.map(k=>agg[k].inst), forg:ks.map(k=>agg[k].forg),
+    ranges:ks.map(k=>agg[k].from.slice(5)+'~'+agg[k].to.slice(5)), src:tgt.src};
+}
+
+function f8Draw(){
+  const box=document.getElementById('fig8box');
+  if(!F8||!F8.targets){ box.innerHTML='<div class="err">수급 데이터 없음</div>'; return; }
+  const s=f8Series();
+  if(!s){ box.innerHTML='<div class="err">'+T8+' — 수집된 데이터가 아직 없습니다</div>'; document.getElementById('sum8').innerHTML=''; return; }
+  const li=s.labels.length-1;
+  document.getElementById('sum8').innerHTML=
+    [['개인',s.ind[li]],['기관',s.inst[li]],['외국인',s.forg[li]]].map(([n,v])=>
+     `<div><div class="sn">${P8==='d'?'전일('+s.iso[li].slice(5)+')':'최근 '+({'m':'월','y':'연'}[P8]||'')} ${n}</div>
+      <div class="sv" style="color:${v>=0?'var(--up)':'var(--down)'}">${f8Fmt(v)}</div></div>`).join('');
+  document.getElementById('lg8s').innerHTML=
+    `<span><span class="sw" style="background:#6B6F76;width:11px;height:11px"></span>개인</span>
+     <span><span class="sw" style="background:#B8891E;width:11px;height:11px"></span>기관</span>
+     <span><span class="sw" style="background:#0E5F58;width:11px;height:11px"></span>외국인</span>
+     ${CUM8?'<span><svg viewBox="0 0 30 12" style="width:30px;height:12px;display:inline-block;vertical-align:-2px"><polyline points="1,9 15,6 29,3" fill="none" stroke="#0E5F58" stroke-width="2.4"/></svg> 외국인 누적('+(s.iso[0]||'').slice(5)+'~)</span>':''}
+     <span style="font-family:var(--mono);font-size:10px;color:var(--faint)">${T8==='KOSPI'||T8==='KOSDAQ'?'억원 · 연초 소급':'억원 · 수량×종가 근사 · '+((F8.targets[T8].daily[0]||{}).d||'')+'부터 누적 중'}</span>`;
+  // 캘린더 범위
+  const calEl=document.getElementById('cal8');
+  const D=F8.targets[T8].daily;
+  if(calEl&&D.length){ calEl.min=D[0].d; calEl.max=D[D.length-1].d; if(!calEl.value) calEl.value=D[D.length-1].d; }
+
+  const W=980,H=360,L=70,B=300,T=30,Rr=950;
+  const cum=[]; let c=0; s.forg.forEach(v=>{c+=v;cum.push(c);});
+  const all=[...s.ind,...s.inst,...s.forg,...(CUM8?cum:[]),0];
+  const lo=Math.min(...all), hi=Math.max(...all);
+  const y=v=>B-(v-lo)/(hi-lo||1)*(B-T);
+  const n=s.labels.length, gw=(Rr-L)/n, bw=Math.min(16,gw/4.6);
+  let g=`<svg class="${MOB?'mob':''}" viewBox="0 0 ${W} ${H}">`;
+  [lo,0,hi].forEach(v=>{
+    g+=`<line x1="${L}" y1="${y(v)}" x2="${Rr}" y2="${y(v)}" class="gline" ${v===0?'stroke="#D2CFC7"':''}/>`;
+    g+=`<text class="axis" x="${L-7}" y="${y(v)+5}" text-anchor="end">${v===0?'0':f8Fmt(v).replace('+','')}</text>`;
+  });
+  s.labels.forEach((lb,i)=>{
+    const cx=L+gw*i+gw/2;
+    [['ind','#6B6F76',-1],['inst','#B8891E',0],['forg','#0E5F58',1]].forEach(([k,col,off])=>{
+      const v=s[k][i], sel=SEL8===i;
+      const bx=cx+off*bw*1.25-bw/2, y0=y(0), y1=y(v);
+      g+=`<rect x="${bx}" y="${Math.min(y0,y1)}" width="${bw}" height="${Math.max(Math.abs(y0-y1),1.5)}" fill="${col}" opacity="${v>=0?1:0.55}" ${sel?'stroke="#E8A317" stroke-width="2.5"':''} onclick="f8Pick(${i})" style="cursor:pointer"/>`;
+    });
+    if(n<=6||i%2===0||i===n-1) g+=`<text class="axis" x="${cx}" y="${B+24}" text-anchor="middle">${lb}</text>`;
+  });
+  if(CUM8){
+    g+=`<polyline points="${cum.map((v,i)=>(L+gw*i+gw/2)+','+y(v)).join(' ')}" fill="none" stroke="#0E5F58" stroke-width="2.6" opacity=".9"/>`;
+    g+=`<text class="axis" x="${Math.min(L+gw*(n-1)+gw/2,Rr-8)}" y="${y(cum[n-1])-12}" text-anchor="end" fill="#0E5F58" font-weight="700">누적 ${f8Fmt(cum[n-1])}</text>`;
+  }
+  g+=`</svg>`;
+  box.innerHTML=g;
+  // 표
+  const tbl=document.getElementById('tbl8');
+  if(TBL8){
+    let cc=0;
+    tbl.innerHTML='<table><tr><th>'+(P8==='d'?'날짜':P8==='m'?'월':'연도')+'</th><th>개인</th><th>기관</th><th>외국인</th><th>외국인 누적</th></tr>'+
+      s.labels.map((lb,i)=>{ cc+=s.forg[i];
+        const cd=v=>`<td style="color:${v>=0?'var(--up)':'var(--down)'}">${f8Fmt(v)}</td>`;
+        return `<tr onclick="f8Pick(${i})" style="cursor:pointer${SEL8===i?';background:#FFF3E0':''}"><td>${lb}</td>${cd(s.ind[i])}${cd(s.inst[i])}${cd(s.forg[i])}${cd(cc)}</tr>`;
+      }).join('')+'</table>';
+  } else tbl.innerHTML='';
+}
+function f8Pick(i){
+  SEL8=i; f8Draw();
+  const s=f8Series(); if(!s) return;
+  const per = P8==='d' ? s.iso[i] : s.labels[i]+(s.ranges?' ('+s.ranges[i]+')':'');
+  document.getElementById('ro8').innerHTML=
+    `<b>${T8NAMES[T8]} · ${per}</b> — 개인 <b style="color:${s.ind[i]>=0?'var(--up)':'var(--down)'}">${f8Fmt(s.ind[i])}</b>
+     · 기관 <b style="color:${s.inst[i]>=0?'var(--up)':'var(--down)'}">${f8Fmt(s.inst[i])}</b>
+     · 외국인 <b style="color:${s.forg[i]>=0?'var(--up)':'var(--down)'}">${f8Fmt(s.forg[i])}</b>
+     <div class="tagline"><span class="tag k">전일 마감 확정</span><span class="tag">출처: ${s.src||'네이버금융(KRX 전재)'}</span>
+     <span class="tag">수집: ${(F8.updated||'').slice(0,10)}</span></div>`;
+}
+function cal8Pick(iso){
+  const card=document.getElementById('calCard8');
+  const tgt=F8&&F8.targets&&F8.targets[T8]; if(!tgt) return;
+  const r=tgt.daily.find(x=>x.d===iso);
+  if(!r){ card.innerHTML=`<div class="calcard8">⚠ ${iso} — 데이터 없음 (거래일 아님 또는 수집 범위 밖)</div>`; return; }
+  const cd=v=>`<b style="color:${v>=0?'var(--up)':'var(--down)'}">${f8Fmt(v)}</b>`;
+  card.innerHTML=`<div class="calcard8"><b>${T8NAMES[T8]} · ${iso}</b> — 개인 ${cd(r.ind)} · 기관 ${cd(r.inst)} · 외국인 ${cd(r.forg)}
+    <span class="tag k" style="margin-left:6px">확정</span><span class="tag">${tgt.src||'네이버금융'}</span></div>`;
+  if(P8==='d'){ const s=f8Series(); const i=s?s.iso.indexOf(iso):-1; if(i>=0){SEL8=i; f8Draw();} }
+}
 async function loadFig07(force){
   try{
     const r = await fetch(API.replace('type=all','type=fig07') + (force?'&nocache=1':''));
@@ -1395,7 +1547,7 @@ async function refreshAll(){
     applyLatestBadge(); composeLede(); fitLede(); renderAll();
     await loadTickerbar(true);
     // 나머지는 이어서
-    await Promise.allSettled([ ensureDaily(true, true), loadDram(true), loadEvents(true), loadFig06(true), loadFig07(true) ]);
+    await Promise.allSettled([ ensureDaily(true, true), loadDram(true), loadEvents(true), loadFig06(true), loadFig07(true), loadFig08(true) ]);
     NEWS = null; if(TAB === 'news') loadNews(true);
     const t = new Date();
     const el = $('updatedText');
@@ -1422,6 +1574,7 @@ async function refreshAll(){
   loadEvents();
   loadFig06();
   loadFig07();
+  loadFig08();
   attachZoom('fig5');
   ensureDaily(true);           // 일별은 뒤에서 조용히 채움
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitLede);
