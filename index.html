@@ -500,8 +500,11 @@ function drawLineChart(elId, seriesList, keys, opts={}){
     g += `<text class="axis" x="${L-8}" y="${yy+4}" text-anchor="end">${fmt(vv,0)}</text>`;
   }
   const step = Math.max(1, Math.ceil(keys.length/(MOB?4:8)));
-  keys.forEach((m,i)=>{ if(i%step===0||i===keys.length-1)
-    g += `<text class="axis" x="${x(i)}" y="${H-12}" text-anchor="middle">${keyLabel(m)}</text>`; });
+  keys.forEach((m,i)=>{ if(i%step===0||i===keys.length-1){
+    const lastEdge = i===keys.length-1 && x(i) > W-R-(MOB?90:44);   // 우측 끝 잘림 방지
+    g += `<text class="axis" x="${lastEdge?Math.min(x(i)+12,W-4):x(i)}" y="${H-12}" text-anchor="${lastEdge?'end':'middle'}">${keyLabel(m)}</text>`;
+  }});
+  if(opts.asof) g += `<text class="axis" x="${W-4}" y="${MOB?30:18}" text-anchor="end" fill="#B9BDC2" font-size="${MOB?22:11}">${opts.asof}</text>`;
   // 선택 이벤트 하이라이트 밴드
   if(selEvt){
     const ev = EVENTS.find(e=>e.num===selEvt);
@@ -610,7 +613,7 @@ function renderAll(){
       (nS.length ? `<span class="lg">${swHtml(PAL.nasdaq,true)}NASDAQ${lgVal(nS,2)}</span>` : '');
     const series = [{data:normalize(kS),color:PAL.kospi},{data:normalize(sS),color:PAL.spx,dash:'6 5'}];
     if(nS.length) series.push({data:normalize(nS),color:PAL.nasdaq,dash:'2 4'});
-    drawLineChart('fig1', series, keys,{pins:true});
+    drawLineChart('fig1', series, keys,{pins:true, asof:'기준 '+keyLabel(keys[keys.length-1])+(DATA.stocks&&DATA.stocks.updated?' · 수집 '+String(DATA.stocks.updated).slice(5,16):'')});
   } else drawLineChart('fig1',[],[],{errMsg: dm && !DAILY_LOADED ? '일별 데이터를 불러오는 중입니다.' : '지수 데이터를 받지 못했습니다. 새로고침하면 다시 시도합니다.'});
 
   // FIG.02
@@ -627,7 +630,7 @@ function renderAll(){
     if(act.length){
       const keys = keys2;
       const cut = s => s.filter(p=>keys.includes(p.k));
-      drawLineChart('fig2', act.map(n=>({data:normalize(cut(sf(stSrc[n],'close',kname))),color:STOCK_COLORS[n]||PAL.muted})), keys,{pins:true});
+      drawLineChart('fig2', act.map(n=>({data:normalize(cut(sf(stSrc[n],'close',kname))),color:STOCK_COLORS[n]||PAL.muted})), keys,{pins:true, asof:'기준 '+keyLabel(keys[keys.length-1])+(DATA.stocks&&DATA.stocks.updated?' · 수집 '+String(DATA.stocks.updated).slice(5,16):'')});
     } else $('fig2').innerHTML='<div class="err">범례에서 종목을 선택하세요</div>';
   } else drawLineChart('fig2',[],[],{errMsg: dm && !DAILY_LOADED ? '일별 데이터를 불러오는 중입니다.' : '종목 데이터를 받지 못했습니다. 새로고침하면 다시 시도합니다.'});
 
@@ -668,7 +671,7 @@ function renderFig3(){
     $('lg3').innerHTML = `<span class="lg"><span class="sw sw-bar" style="background:${PAL.exp}"></span>반도체 수출${eok(lastV(semi))} <em>좌축·막대</em></span>
       <span class="lg">${swHtml(PAL.mem)}메모리 HS854232${eok(lastV(mem))} <em>좌축·선</em></span>` + lgX;
     drawLineChart('fig3',[{data:mem,color:PAL.mem}],keys,
-      {bars:{data:semi,color:PAL.exp}, rSeries:rS, rAxis:rS.length>0, h:420, pins:true});
+      {bars:{data:semi,color:PAL.exp}, rSeries:rS, rAxis:rS.length>0, h:420, pins:true, asof:'기준 '+keyLabel(keys[keys.length-1])+(ex.updated?' · 수집 '+String(ex.updated).slice(5,16):'')});
   } else drawLineChart('fig3',[],[],{errMsg:'수출 데이터 연결 실패'});
 }
 
@@ -858,7 +861,7 @@ function renderDram(){
     left.map(s=>({data:s.points.map(p=>({k:p.ym,v:p.v})),color:cmap[s.color]})),
     yms,
     { rSeries: right.map(s=>({data:s.points.map(p=>({k:p.ym,v:p.v})),color:cmap[s.color],dash:'6 5'})),
-      rAxis:true, h:400 });
+      rAxis:true, h:400, asof:'기준 '+keyLabel(yms[yms.length-1])+(DRAM.updated?' · 수집 '+String(DRAM.updated).slice(5,16):'') });
   const dn = DRAM.daily && DRAM.daily.length;
   document.getElementById('ro5').innerHTML =
     (DRAM.seed.outlook||[]).map(o=>'· '+o).join('<br>') +
@@ -938,6 +941,7 @@ function f8Draw(){
   const y=v=>B-(v-lo)/(hi-lo||1)*(B-T);
   const n=s.labels.length, gw=(Rr-L)/n, bw=Math.min(16,gw/4.6);
   let g=`<svg class="${MOB?'mob':''}" viewBox="0 0 ${W} ${H}">`;
+  g+=`<text class="axis" x="${W-6}" y="${MOB?26:18}" text-anchor="end" fill="#B9BDC2" font-size="${MOB?22:11}">확정 ${(s.iso[li]||'').slice(5)} · 수집 ${(F8.updated||'').slice(5,16)}</text>`;
   [lo,0,hi].forEach(v=>{
     g+=`<line x1="${L}" y1="${y(v)}" x2="${Rr}" y2="${y(v)}" class="gline" ${v===0?'stroke="#D2CFC7"':''}/>`;
     g+=`<text class="axis" x="${L-7}" y="${y(v)+5}" text-anchor="end">${v===0?'0':f8Fmt(v).replace('+','')}</text>`;
@@ -949,7 +953,10 @@ function f8Draw(){
       const bx=cx+off*bw*1.25-bw/2, y0=y(0), y1=y(v);
       g+=`<rect x="${bx}" y="${Math.min(y0,y1)}" width="${bw}" height="${Math.max(Math.abs(y0-y1),1.5)}" fill="${col}" opacity="${v>=0?1:0.55}" ${sel?'stroke="#E8A317" stroke-width="2.5"':''} onclick="f8Pick(${i})" style="cursor:pointer"/>`;
     });
-    if(n<=6||i%2===0||i===n-1) g+=`<text class="axis" x="${cx}" y="${B+24}" text-anchor="middle">${lb}</text>`;
+    if(n<=6||i%2===0||i===n-1){
+      const lastL=i===n-1;
+      g+=`<text class="axis" x="${lastL?Math.min(cx+10,W-4):cx}" y="${B+24}" text-anchor="${lastL&&cx>W-90?'end':'middle'}">${lb}</text>`;
+    }
   });
   if(CUM8){
     g+=`<polyline points="${cum.map((v,i)=>(L+gw*i+gw/2)+','+y(v)).join(' ')}" fill="none" stroke="#0E5F58" stroke-width="2.6" opacity=".9"/>`;
@@ -1043,6 +1050,7 @@ function f7Draw(){
   const y=v=>B-(v-vmin)/(vmax-vmin)*(B-T);
   const x=i=>L+i*(R-L)/Math.max(slots.length-1,1);
   let g=`<svg class="${MOB?'mob':''}" viewBox="0 0 ${W} ${H}">`;
+  g+=`<text class="axis" x="${W-6}" y="${MOB?28:16}" text-anchor="end" fill="#B9BDC2" font-size="${MOB?22:11}">수집 ${(F7.updated||'').slice(5,16)}</text>`;
   [vmin,0,vmax*0.5,vmax].forEach(v=>{
     g+=`<line x1="${L}" y1="${y(v)}" x2="${R}" y2="${y(v)}" class="gline" ${v===0?'stroke="#D2CFC7"':''}/>`;
     g+=`<text class="axis" x="${L-7}" y="${y(v)+5}" text-anchor="end">${Math.round(v)}%</text>`;
@@ -1091,8 +1099,9 @@ function f7Draw(){
     g+=`<circle cx="${x(i)}" cy="${y(q.yoy)}" r="${sel?7:4.5}" fill="#B8891E" opacity="${f7Op('mu')}" ${sel?'stroke="#E8A317" stroke-width="3"':''} onclick="f7Pick(${i},-1)" style="cursor:pointer"/>`;
   });
   slots.forEach((s,i)=>{
-    if(s.future) g+=`<text class="axis" x="${x(i)}" y="${B+26}" text-anchor="middle" fill="#9AA0A6">Q${s.cq}E</text>`;
-    else if(i%2===0||i===slots.length-1) g+=`<text class="axis" x="${x(i)}" y="${B+26}" text-anchor="middle">${String(s.cy).slice(2)}Q${s.cq}</text>`;
+    const lastS=i===slots.length-1;
+    if(s.future) g+=`<text class="axis" x="${lastS?Math.min(x(i)+10,W-4):x(i)}" y="${B+26}" text-anchor="${lastS?'end':'middle'}" fill="#9AA0A6">Q${s.cq}E</text>`;
+    else if(i%2===0||lastS) g+=`<text class="axis" x="${lastS?Math.min(x(i)+10,W-4):x(i)}" y="${B+26}" text-anchor="${lastS?'end':'middle'}">${String(s.cy).slice(2)}Q${s.cq}</text>`;
   });
   g+=`</svg>`;
   box.innerHTML=g;
@@ -1260,6 +1269,7 @@ function f6Draw(){
   const y=v=>B-(v/vmax)*(B-T);
   const KC={actual:'#0E5F58',guide:'#5B958F',extrap:'#BDD5D1'};
   let g=`<svg class="${MOB?'mob':''}" viewBox="0 0 ${W} ${H}">`;
+  g+=`<text class="axis" x="${W-6}" y="${MOB?28:16}" text-anchor="end" fill="#B9BDC2" font-size="${MOB?22:11}">수집 ${(F6.updated||'').slice(5,16)}</text>`;
   [0,.33,.66,1].forEach(f=>{const vy=y(vmax*f);
     g+=`<line x1="${L}" y1="${vy}" x2="${W-14}" y2="${vy}" class="gline"/>`;
     g+=`<text class="axis" x="${L-7}" y="${vy+5}" text-anchor="end">${Math.round(vmax*f)}</text>`;});
@@ -1280,7 +1290,8 @@ function f6Draw(){
       g+=`<rect x="${cx}" y="${y(b.v)}" width="${bw}" height="${B-y(b.v)}" fill="${KC[b.kind]}" ${dash} ${sel?'stroke="#E8A317" stroke-width="3"':''} onclick="f6Pick(${i},-1)" style="cursor:pointer"/>`;
       g+=`<text class="axis" x="${cx+bw/2}" y="${y(b.v)-8}" text-anchor="middle" font-weight="700" fill="#14181D">${b.v}</text>`;
     }
-    g+=`<text class="axis" x="${cx+bw/2}" y="${B+26}" text-anchor="middle">${b.y}${b.kind==='extrap'||b.kind==='pending'?'(E)':''}</text>`;
+    const isLast=i===bars.length-1, lx=cx+bw/2;
+    g+=`<text class="axis" x="${isLast?Math.min(lx+10,W-4):lx}" y="${B+26}" text-anchor="${isLast&&lx>W-70?'end':'middle'}">${b.y}${b.kind==='extrap'||b.kind==='pending'?'(E)':''}</text>`;
   });
   // 연도 간 YoY 성장률 표기 (전망 구간은 (E))
   for(let i=1;i<bars.length;i++){
