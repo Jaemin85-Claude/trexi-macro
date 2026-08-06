@@ -886,7 +886,7 @@ function f8Tabs(){
     + `<button class="fbtn ${CUM8?'on':''}" style="padding:6px 11px;min-height:32px" onclick="CUM8=!CUM8;f8Draw()">외국인 누적선</button>`
     + `<button class="fbtn ${TBL8?'on':''}" style="padding:6px 11px;min-height:32px" onclick="TBL8=!TBL8;f8Draw()">표로 보기</button>`;
 }
-function f8SetT(k){T8=k;SEL8=null;f8Tabs();f8Draw();f8Ro();}
+function f8SetT(k){T8=k;SEL8=null;f8Tabs();f8Draw();f8Ro();const ce=document.getElementById('cal8');if(ce&&ce.value)cal8Pick(ce.value);}
 function f8SetP(k){P8=k;SEL8=null;f8Tabs();f8Draw();f8Ro();}
 function f8Ro(){document.getElementById('ro8').innerHTML='막대를 누르면 해당 기간의 3주체 수급과 출처가 표시됩니다.';}
 function f8Fmt(v){ if(v===null||v===undefined||isNaN(v)) return '—';
@@ -901,9 +901,10 @@ function f8Series(){  // 기간 탭에 따른 {labels, ind, inst, forg, iso[]}
     return {labels:a.map(r=>r.d.slice(5).replace('-','/')), iso:a.map(r=>r.d),
       ind:a.map(r=>r.ind), inst:a.map(r=>r.inst), forg:a.map(r=>r.forg), src:tgt.src};
   }
+  const yr0=String(new Date().getFullYear());
   const key = P8==='m' ? (d=>d.slice(0,7)) : (d=>d.slice(0,4));
   const agg={};
-  D.forEach(r=>{ const k=key(r.d);
+  D.filter(r=>r.d.slice(0,4)===yr0).forEach(r=>{ const k=key(r.d);
     if(!agg[k]) agg[k]={ind:0,inst:0,forg:0,n:0,from:r.d,to:r.d};
     agg[k].ind+=r.ind; agg[k].inst+=r.inst; agg[k].forg+=r.forg; agg[k].n++;
     if(r.d<agg[k].from)agg[k].from=r.d; if(r.d>agg[k].to)agg[k].to=r.d; });
@@ -920,9 +921,12 @@ function f8Draw(){
   if(!s){ box.innerHTML='<div class="err">'+T8+' — 수집된 데이터가 아직 없습니다</div>'; document.getElementById('sum8').innerHTML=''; return; }
   const li=s.labels.length-1;
   const a8=document.getElementById('asof8'); if(a8) a8.textContent='확정 '+(s.iso[li]||'').slice(5).replace('-','/')+' · 수집 '+(F8.updated||'').slice(5,16);
+  const perLbl = P8==='d' ? '전일('+s.iso[li].slice(5)+')'
+    : P8==='m' ? s.iso[li].replace('-','.')+(s.ranges?' ('+s.ranges[li].split('~')[0]+'~'+s.ranges[li].split('~')[1]+')':'')
+    : s.iso[li]+'년 누적'+(s.ranges?' ('+s.ranges[li]+')':'');
   document.getElementById('sum8').innerHTML=
     [['개인',s.ind[li]],['기관',s.inst[li]],['외국인',s.forg[li]]].map(([n,v])=>
-     `<div><div class="sn">${P8==='d'?'전일('+s.iso[li].slice(5)+')':'최근 '+({'m':'월','y':'연'}[P8]||'')} ${n}</div>
+     `<div><div class="sn">${perLbl} ${n}</div>
       <div class="sv" style="color:${v>=0?'var(--up)':'var(--down)'}">${f8Fmt(v)}</div></div>`).join('');
   document.getElementById('lg8s').innerHTML=
     `<span><span class="sw" style="background:#6B6F76;width:11px;height:11px"></span>개인</span>
@@ -988,9 +992,13 @@ function f8Pick(i){
 }
 function cal8Pick(iso){
   const card=document.getElementById('calCard8');
-  const tgt=F8&&F8.targets&&F8.targets[T8]; if(!tgt) return;
-  const r=tgt.daily.find(x=>x.d===iso);
-  if(!r){ card.innerHTML=`<div class="calcard8">⚠ ${iso} — 데이터 없음 (거래일 아님 또는 수집 범위 밖)</div>`; return; }
+  const tgt=F8&&F8.targets&&F8.targets[T8]; if(!tgt||!iso) return;
+  const nd=s=>String(s).slice(0,10);
+  const r=tgt.daily.find(x=>nd(x.d)===nd(iso));
+  if(!r){
+    const D=tgt.daily;
+    card.innerHTML=`<div class="calcard8">⚠ ${nd(iso)} — 거래일 아니거나 수집 범위(${D.length?nd(D[0].d)+' ~ '+nd(D[D.length-1].d):'없음'}) 밖입니다</div>`;
+    return; }
   const cd=v=>`<b style="color:${v>=0?'var(--up)':'var(--down)'}">${f8Fmt(v)}</b>`;
   card.innerHTML=`<div class="calcard8"><b>${T8NAMES[T8]} · ${iso}</b> — 개인 ${cd(r.ind)} · 기관 ${cd(r.inst)} · 외국인 ${cd(r.forg)}
     <span class="tag k" style="margin-left:6px">확정</span><span class="tag">${tgt.src||'네이버금융'}</span></div>`;
