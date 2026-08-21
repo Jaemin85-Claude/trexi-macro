@@ -1531,18 +1531,19 @@ function f9BarChart(elId, ptsAll, o){
   const el=$(elId);
   const a=(ptsAll||[]).slice(-12);
   if(!a.length){ el.innerHTML='<div class="err">데이터 없음 — 주간 수집 대기</div>'; return; }
-  const W=480,H=256,L=58,R=470,T=24,B=204;
+  const W=480,H=258,L=66,R=468,T=26,B=206;
+  const fs=MOB?15:12, dl=MOB?17:12.5;   // 인라인 지정 — 공통 svg.mob 27px 규칙보다 우선
   let mn=Math.min.apply(null,a.map(p=>p.v)), mx=Math.max.apply(null,a.map(p=>p.v));
   if(o.zeroBase){ mn=Math.min(mn,0); mx=Math.max(mx,0); }
   const span=(mx-mn)||1;
-  mn-=o.zeroBase?span*0.05:span*0.18; mx+=span*0.14;
+  mn-=o.zeroBase?span*0.05:span*0.18; mx+=span*0.16;
   const y=v=>B-(v-mn)/(mx-mn)*(B-T);
   const n=a.length, gw=(R-L)/n, bw=Math.min(24,gw*0.58);
-  let g='<svg class="'+(MOB?'mob':'')+'" viewBox="0 0 480 '+H+'">';
+  let g='<svg viewBox="0 0 480 '+H+'">';
   for(let i2=0;i2<=4;i2++){
     const vv=mn+(mx-mn)*i2/4, yy=y(vv);
     g+='<line x1="'+L+'" y1="'+yy+'" x2="'+R+'" y2="'+yy+'" class="gline"/>';
-    g+='<text class="axis" x="'+(L-6)+'" y="'+(yy+4)+'" text-anchor="end" font-size="'+(MOB?19:12)+'">'+fmt(vv,0)+'</text>';
+    g+='<text class="axis" style="font-size:'+fs+'px" x="'+(L-6)+'" y="'+(yy+4)+'" text-anchor="end">'+fmt(vv,0)+'</text>';
   }
   if(o.zeroBase){ const zy=y(0); g+='<line x1="'+L+'" y1="'+zy+'" x2="'+R+'" y2="'+zy+'" stroke="#D2CFC7" stroke-width="1.4"/>'; }
   a.forEach((p,i)=>{
@@ -1550,9 +1551,11 @@ function f9BarChart(elId, ptsAll, o){
     const col=(o.zeroBase&&p.v<0)?'#B5303F':'#0E5F58';
     g+='<rect x="'+(cx-bw/2)+'" y="'+Math.min(y0,y1)+'" width="'+bw+'" height="'+Math.max(Math.abs(y0-y1),1.5)+'" fill="'+col+'" opacity=".82" rx="1.5"/>';
     if(i===a.length-1)
-      g+='<text class="axis" x="'+Math.min(cx,R-8)+'" y="'+(y1-7)+'" text-anchor="middle" font-weight="700" fill="#14181D" font-size="'+(MOB?21:12)+'">'+(o.zeroBase&&p.v>=0?'+':'')+fmt(p.v,0)+'</text>';
-    if(i%3===0||i===a.length-1)
-      g+='<text class="axis" x="'+cx+'" y="'+(B+20)+'" text-anchor="middle" font-size="'+(MOB?18:11)+'">'+p.t.slice(2,7).replace('-','.')+'</text>';
+      g+='<text class="axis" style="font-size:'+dl+'px" x="'+R+'" y="'+(Math.min(y0,y1)-7)+'" text-anchor="end" font-weight="700" fill="#14181D">'+(o.zeroBase&&p.v>=0?'+':'')+fmt(p.v,0)+'</text>';
+    if(i%3===0||i===a.length-1){
+      const lastL=i===a.length-1;
+      g+='<text class="axis" style="font-size:'+fs+'px" x="'+(lastL?R:cx)+'" y="'+(B+18)+'" text-anchor="'+(lastL?'end':'middle')+'">'+p.t.slice(2,7).replace('-','.')+'</text>';
+    }
   });
   g+='</svg>';
   el.innerHTML=g;
@@ -1571,42 +1574,48 @@ function f9DrawRates(){
   months.forEach(m=>{ const kv=stepVal(kr,m), uv=stepVal(us,m);
     if(kv!==null&&uv!==null){ M.push(m); K.push(kv); U.push(uv); } });
   if(M.length<2){ el.innerHTML='<div class="err">표시 구간 부족 — 수집 누적 대기</div>'; lg.innerHTML=''; return; }
-  const W=980,H=302,L=64,R=946,T=42,B=238;
-  const vmax=Math.max.apply(null,U.concat(K))+0.8;
-  const vmin=Math.max(0,Math.min.apply(null,U.concat(K))-0.8);
+  const W=980,H=312,L=66,R=944,T=50,B=240;
+  const ts=MOB?24:13, pl=MOB?22:12, al=MOB?23:13;  // 인라인 지정 — 공통 규칙보다 우선
+  const vmax=Math.max.apply(null,U.concat(K))+0.7;
+  const vmin=Math.max(0,Math.min.apply(null,U.concat(K))-0.7);
   const y=v=>B-(v-vmin)/(vmax-vmin)*(B-T);
   const x=i=>L+i*(R-L)/(M.length-1);
-  let g='<svg class="'+(MOB?'mob':'')+'" viewBox="0 0 '+W+' '+H+'">';
+  let g='<svg viewBox="0 0 '+W+' '+H+'">';
   for(let i2=0;i2<=4;i2++){ const vv=vmin+(vmax-vmin)*i2/4;
     g+='<line x1="'+L+'" y1="'+y(vv)+'" x2="'+R+'" y2="'+y(vv)+'" class="gline"/>';
-    g+='<text class="axis" x="'+(L-7)+'" y="'+(y(vv)+4)+'" text-anchor="end">'+vv.toFixed(2)+'</text>'; }
-  // 금리차 양방향 화살표: 첫 달 · 변동 달 · 마지막 달 (최대 4개)
-  const idxs=[0];
-  for(let i=1;i<M.length;i++) if(K[i]!==K[i-1]||U[i]!==U[i-1]) idxs.push(i);
-  if(idxs[idxs.length-1]!==M.length-1) idxs.push(M.length-1);
-  const show=idxs.length>4?[idxs[0]].concat(idxs.slice(-3)):idxs;
-  show.forEach(i=>{
-    const yt=Math.min(y(U[i]),y(K[i]))+9, yb=Math.max(y(U[i]),y(K[i]))-9;
-    if(yb-yt<18) return;
+    g+='<text class="axis" style="font-size:'+ts+'px" x="'+(L-7)+'" y="'+(y(vv)+4)+'" text-anchor="end">'+vv.toFixed(2)+'</text>'; }
+  // 금리차 화살표: 변동월 + 최신월, 최소 2칸 간격, 최대 3개(모바일 2개)
+  let cand=[];
+  for(let i=1;i<M.length;i++) if(K[i]!==K[i-1]||U[i]!==U[i-1]) cand.push(i);
+  if(!cand.length) cand=[Math.floor(M.length/2)];
+  if(M.length-1-cand[cand.length-1]>=2) cand.push(M.length-1);
+  const sp=[];
+  cand.forEach(i=>{ if(!sp.length||i-sp[sp.length-1]>=2) sp.push(i); else sp[sp.length-1]=i; });
+  const shown = (MOB&&sp.length>2) ? [sp[0],sp[sp.length-1]] : (sp.length>3 ? [sp[0]].concat(sp.slice(-2)) : sp);
+  shown.forEach(i=>{
+    const yt=Math.min(y(U[i]),y(K[i]))+10, yb=Math.max(y(U[i]),y(K[i]))-10;
+    if(yb-yt<20) return;
     const xx=x(i), gap=K[i]-U[i];
     g+='<line x1="'+xx+'" y1="'+yt+'" x2="'+xx+'" y2="'+yb+'" stroke="#9AA0A6" stroke-width="1.4" stroke-dasharray="3 3"/>';
     g+='<polygon points="'+xx+','+(yt-4)+' '+(xx-4)+','+(yt+4)+' '+(xx+4)+','+(yt+4)+'" fill="#9AA0A6"/>';
     g+='<polygon points="'+xx+','+(yb+4)+' '+(xx-4)+','+(yb-4)+' '+(xx+4)+','+(yb-4)+'" fill="#9AA0A6"/>';
-    const right=x(i)>W*0.72;
-    g+='<text class="axis" x="'+(right?xx-8:xx+8)+'" y="'+((yt+yb)/2+4)+'" text-anchor="'+(right?'end':'start')+'" font-weight="700" fill="#4A554F">차 '+(gap>=0?'+':'')+gap.toFixed(2)+'%p</text>';
+    const right=xx>W*0.72;
+    g+='<text class="axis" style="font-size:'+al+'px" x="'+(right?xx-8:xx+8)+'" y="'+((yt+yb)/2+4)+'" text-anchor="'+(right?'end':'start')+'" font-weight="700" fill="#4A554F">차 '+(gap>=0?'+':'')+gap.toFixed(2)+'%p</text>';
   });
   g+='<polyline points="'+U.map((v,i)=>x(i)+','+y(v)).join(' ')+'" fill="none" stroke="#16509B" stroke-width="2.6"/>';
   g+='<polyline points="'+K.map((v,i)=>x(i)+','+y(v)).join(' ')+'" fill="none" stroke="#0E5F58" stroke-width="2.6"/>';
   M.forEach((m,i)=>{
-    g+='<circle cx="'+x(i)+'" cy="'+y(U[i])+'" r="3.5" fill="#FFFFFF" stroke="#16509B" stroke-width="2"/>';
-    g+='<circle cx="'+x(i)+'" cy="'+y(K[i])+'" r="3.5" fill="#FFFFFF" stroke="#0E5F58" stroke-width="2"/>';
-    const lbl = MOB ? (i%2===0||i===M.length-1) : true;
+    const chgPt = i===0||i===M.length-1||K[i]!==K[i-1]||U[i]!==U[i-1];
+    g+='<circle cx="'+x(i)+'" cy="'+y(U[i])+'" r="'+(MOB?5:3.5)+'" fill="#FFFFFF" stroke="#16509B" stroke-width="2"/>';
+    g+='<circle cx="'+x(i)+'" cy="'+y(K[i])+'" r="'+(MOB?5:3.5)+'" fill="#FFFFFF" stroke="#0E5F58" stroke-width="2"/>';
+    const lbl = MOB ? chgPt : true;   // 데스크톱=전 포인트, 모바일=변동점·양끝만
     if(lbl){
-      g+='<text class="axis" x="'+x(i)+'" y="'+(y(U[i])-9)+'" text-anchor="middle" fill="#16509B" font-weight="600" font-size="'+(MOB?19:11.5)+'">'+U[i].toFixed(2)+'</text>';
-      g+='<text class="axis" x="'+x(i)+'" y="'+(y(K[i])+19)+'" text-anchor="middle" fill="#0E5F58" font-weight="600" font-size="'+(MOB?19:11.5)+'">'+K[i].toFixed(2)+'</text>';
+      const lx=i===M.length-1?Math.min(x(i),W-30):x(i);
+      g+='<text class="axis" style="font-size:'+pl+'px" x="'+lx+'" y="'+(y(U[i])-10)+'" text-anchor="middle" fill="#16509B" font-weight="600">'+U[i].toFixed(2)+'</text>';
+      g+='<text class="axis" style="font-size:'+pl+'px" x="'+lx+'" y="'+(y(K[i])+20)+'" text-anchor="middle" fill="#0E5F58" font-weight="600">'+K[i].toFixed(2)+'</text>';
     }
     if(i%2===0||i===M.length-1){ const lastL=i===M.length-1;
-      g+='<text class="axis" x="'+(lastL?Math.min(x(i)+10,W-4):x(i))+'" y="'+(H-10)+'" text-anchor="'+(lastL?'end':'middle')+'">'+m.slice(2).replace('-','.')+'</text>'; }
+      g+='<text class="axis" style="font-size:'+ts+'px" x="'+(lastL?Math.min(x(i)+10,W-4):x(i))+'" y="'+(H-10)+'" text-anchor="'+(lastL?'end':'middle')+'">'+m.slice(2).replace('-','.')+'</text>'; }
   });
   g+='</svg>';
   el.innerHTML=g;
