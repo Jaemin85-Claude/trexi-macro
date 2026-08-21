@@ -187,6 +187,21 @@ svg.mob .axis{font-size:27px}
   border-radius:20px;padding:2px 10px;margin:8px 5px 0 0}
 .chip.u{color:var(--up);border-color:rgba(200,16,46,.32)} .chip.d{color:var(--down);border-color:rgba(22,80,155,.32)}
 
+/* ---------- FIG.09 환율 ---------- */
+.sig9{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);margin:12px 0 10px}
+.sig9>div{background:var(--surface);padding:11px 12px;min-width:0}
+.sig9 .sn{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sig9 .sv{font-family:var(--mono);font-size:15px;font-weight:700;margin-top:2px;white-space:nowrap}
+.sig9 .sj{display:inline-block;font-size:10.5px;font-weight:700;border-radius:10px;padding:1px 8px;margin-top:4px}
+.sig9 .sj.usd{background:#EAF1F9;color:#16509B}
+.sig9 .sj.krw{background:var(--petrol-soft);color:var(--petrol)}
+.sig9 .sj.neu{background:var(--surface-2);color:var(--muted)}
+.sig9 .sd{font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.verdict9{border:1px solid var(--rule);border-left:3px solid var(--petrol);background:var(--surface-2);padding:11px 14px;margin-bottom:14px;font-size:var(--fs-sm);line-height:1.6}
+.row9{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:8px 0 4px}
+.row9>div{min-width:0}
+@media(max-width:720px){.sig9{grid-template-columns:repeat(2,1fr)}.row9{grid-template-columns:1fr}}
+
 /* ---------- 푸터 ---------- */
 footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--rule);font-size:var(--fs-xs);color:var(--faint);line-height:1.9}
 
@@ -357,6 +372,25 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
   <div id="fig8box"><div class="err">수급 데이터를 불러오는 중입니다…</div></div>
   <div id="tbl8"></div>
   <div class="readout" id="ro8" style="white-space:normal">막대를 누르면 해당 기간의 3주체 수급과 출처가 표시됩니다.</div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="figrow"><span class="fig">FIG. 09 · 환율</span><span class="asof" id="asof9"></span></div>
+    <h2>원화의 방어선 — 환율은 어느 쪽이 움직였나</h2>
+  </div>
+  <div class="desc">원/달러 변동을 달러 요인(글로벌)과 원화 요인(한국) 5개 신호로 분해합니다. 외환보유액·경상수지·기준금리는 매주 월요일 자동 수집(한국은행 ECOS·美 FRED), 환율·달러지수는 야후 일별입니다.</div>
+  <div class="sig9" id="sig9"><div class="err" style="grid-column:1/-1;padding:14px">환율 신호를 불러오는 중입니다…</div></div>
+  <div id="verdict9"></div>
+  <div class="legend" id="lg9a"></div>
+  <div id="fig9a" class="chartbox"><div class="err">원/달러 × 달러지수 데이터를 불러오는 중입니다…</div></div>
+  <div class="row9">
+    <div><div class="legend" id="lg9b"></div><div id="fig9b"></div></div>
+    <div><div class="legend" id="lg9c"></div><div id="fig9c"></div></div>
+  </div>
+  <div class="legend" id="lg9d"></div>
+  <div id="fig9d"></div>
+  <div class="readout" id="ro9" style="white-space:normal">신호는 최신 실측값으로 자동 판정되며, 값이 없으면 "확인중"으로 표시됩니다 (임의 수치 없음).</div>
 </section>
 
 <section id="evtSection">
@@ -876,6 +910,7 @@ async function loadFig08(force){
     const r = await fetch(API.replace('type=all','type=fig08') + (force?'&nocache=1':''));
     F8 = await r.json();
     f8Tabs(); f8Draw();
+    if(F9) f9Draw();   // FIG.09 외국인 수급 신호 갱신
   }catch(e){ document.getElementById('fig8box').innerHTML='<div class="err">수급 데이터를 받지 못했습니다. 새로 받기로 재시도해 주세요.</div>'; }
 }
 function f8Tabs(){
@@ -1406,6 +1441,204 @@ function f6Pick(bi,di){
     <div class="tagline"><span class="tag k">${KL[b.kind]}</span><span class="tag">주체: ${b.org}</span>
     <span class="tag">${b.kind==='extrap'?'':'발표: '}${b.pub}</span><span class="tag">수집: ${b.col}</span></div>`+stack+extra;
 }
+// ---------- FIG.09 환율 "원화의 방어선" ----------
+let F9=null;
+async function loadFig09(force){
+  try{
+    const r = await fetch(API.replace('type=all','type=fig09') + (force?'&nocache=1':''));
+    F9 = await r.json();
+    f9Draw();
+  }catch(e){
+    const b=$('sig9');
+    if(b) b.innerHTML='<div class="err" style="grid-column:1/-1">환율 데이터를 받지 못했습니다. 새로 받기로 재시도해 주세요.</div>';
+  }
+}
+function f9Pts(name){ const s=F9&&F9.series&&F9.series[name]; return (s&&s.points)||[]; }
+function f9Last(name){ const a=f9Pts(name); return a.length?a[a.length-1]:null; }
+
+function f9Signals(){
+  const sig=[];
+  // ① DXY (일별 수집 구간 변화)
+  const dxy=DATA.stocks&&DATA.stocks.dailyIndices&&DATA.stocks.dailyIndices.DXY;
+  if(dxy&&dxy.length>1){
+    const chg=(dxy[dxy.length-1].close/dxy[0].close-1)*100;
+    sig.push({n:'DXY 달러지수 (3개월)', v:(chg>=0?'+':'')+chg.toFixed(1)+'%',
+      j:chg<0?'usd':'neu', jl:chg<0?'달러측 요인':'달러측 아님',
+      d:dxy[dxy.length-1].close.toFixed(1)+' · 야후 '+dxy[dxy.length-1].d.slice(5)});
+  } else sig.push({n:'DXY 달러지수 (3개월)', v:'확인중', j:'neu', jl:'판정 대기', d:'일별 수집 대기 — 새로 받기'});
+  // ② 외국인 수급 (당월 KOSPI, FIG.08 시트)
+  const kd=F8&&F8.targets&&F8.targets.KOSPI&&F8.targets.KOSPI.daily;
+  if(kd&&kd.length){
+    const ym=kd[kd.length-1].d.slice(0,7);
+    const sum=kd.filter(r=>r.d.slice(0,7)===ym).reduce((t,r)=>t+(r.forg||0),0);
+    const jo=sum/10000;
+    sig.push({n:'외국인 수급 (당월 KOSPI)', v:(jo>=0?'+':'')+jo.toFixed(1)+'조',
+      j:jo>0?'krw':'neu', jl:jo>0?'원화측 요인':'원화측 아님', d:ym.replace('-','.')+' 순매수 누적 · FIG.08'});
+  } else sig.push({n:'외국인 수급 (당월 KOSPI)', v:'확인중', j:'neu', jl:'판정 대기', d:'FIG.08 수집 대기'});
+  // ③ 경상수지 (최신월)
+  const ca=f9Last('경상수지');
+  if(ca) sig.push({n:'경상수지 (최신월)', v:(ca.v>=0?'+':'')+fmt(ca.v)+'억$',
+    j:ca.v>0?'krw':'neu', jl:ca.v>0?'원화측 요인':'원화측 아님', d:ca.t.replace('-','.')+' · ECOS SA000'});
+  else sig.push({n:'경상수지 (최신월)', v:'확인중', j:'neu', jl:'판정 대기', d:'주간 수집 대기'});
+  // ④ 외환보유액 (전월比)
+  const rv=f9Pts('외환보유액');
+  if(rv.length>1){
+    const diff=rv[rv.length-1].v-rv[rv.length-2].v;
+    sig.push({n:'외환보유액 (전월比)', v:(diff>=0?'+':'')+fmt(diff)+'억$',
+      j:diff>0?'krw':'neu', jl:diff>0?'원화측 요인':'원화측 아님',
+      d:rv[rv.length-1].t.replace('-','.')+' $'+fmt(rv[rv.length-1].v)+'억 · ECOS'});
+  } else sig.push({n:'외환보유액 (전월比)', v:'확인중', j:'neu', jl:'판정 대기', d:'주간 수집 대기'});
+  // ⑤ 한미 금리차
+  const kr=f9Last('한국기준금리'), us=f9Last('미국기준금리상단');
+  if(kr&&us){
+    const gap=kr.v-us.v;
+    sig.push({n:'한미 금리차 (韓−美상단)', v:(gap>=0?'+':'')+gap.toFixed(2)+'%p',
+      j:gap<0?'usd':'krw', jl:gap<0?'달러측 요인':'원화측 요인',
+      d:kr.v.toFixed(2)+' vs '+us.v.toFixed(2)+' · ECOS·FRED'});
+  } else sig.push({n:'한미 금리차 (韓−美상단)', v:'확인중', j:'neu', jl:'판정 대기', d:'주간 수집 대기'});
+  return sig;
+}
+function f9Verdict(sig){
+  const u=sig.filter(s=>s.j==='usd').length, k=sig.filter(s=>s.j==='krw').length;
+  const n=sig.length-u-k;
+  const head = u>k?'달러 요인 우세':(k>u?'원화 요인 우세':'혼조');
+  return '<b>판정: '+head+'</b> — 5개 신호 중 달러측 '+u+' · 원화측 '+k+' · 중립/대기 '+n+
+    '. <span style="color:var(--faint);font-family:var(--mono);font-size:10.5px">최신 실측값 자동 집계 · 투자 판단 아님</span>';
+}
+
+function f9DrawFx(){
+  const box=$('fig9a'), lg=$('lg9a');
+  const di=DATA.stocks&&DATA.stocks.dailyIndices;
+  const fx=di&&di.USDKRW, dx=di&&di.DXY;
+  if(!fx||fx.length<2){
+    box.innerHTML='<div class="err">원/달러 일별 시계열 대기 — v3.9.1 서버 반영 후 "새로 받기"를 눌러 주세요</div>';
+    lg.innerHTML=''; return;
+  }
+  const keys=fx.map(p=>p.d);
+  const fxS=fx.map(p=>({k:p.d,v:p.close}));
+  const dxS=dx?dx.filter(p=>keys.includes(p.d)).map(p=>({k:p.d,v:p.close})):[];
+  const chgF=(fx[fx.length-1].close/fx[0].close-1)*100;
+  const chgD=dx&&dx.length>1?(dx[dx.length-1].close/dx[0].close-1)*100:null;
+  const pc=v=>'<span style="color:'+(v>=0?'var(--up)':'var(--down)')+'">('+(v>=0?'+':'')+v.toFixed(1)+'%)</span>';
+  lg.innerHTML='<span class="lg">'+swHtml(PAL.exp)+'원/달러 <b>'+fmt(fx[fx.length-1].close,1)+'원</b> '+pc(chgF)+'</span>'+
+    (dxS.length?'<span class="lg">'+swHtml(PAL.samsung,true)+'DXY <b>'+dx[dx.length-1].close.toFixed(1)+'</b> '+(chgD!==null?pc(chgD):'')+' <em>우축</em></span>':'')+
+    '<span style="font-family:var(--mono);font-size:10px;color:var(--faint)">최근 3개월 일별 · 같이 내리면 달러 약세, 원/달러만 내리면 원화 강세</span>';
+  drawLineChart('fig9a',[{data:fxS,color:PAL.exp}],keys,
+    {rSeries:dxS.length?[{data:dxS,color:PAL.samsung,dash:'6 5',op:.9}]:[], rAxis:dxS.length>0, h:360});
+}
+
+function f9BarChart(elId, ptsAll, o){
+  const el=$(elId);
+  const a=(ptsAll||[]).slice(-12);
+  if(!a.length){ el.innerHTML='<div class="err">데이터 없음 — 주간 수집 대기</div>'; return; }
+  const W=480,H=256,L=58,R=470,T=24,B=204;
+  let mn=Math.min.apply(null,a.map(p=>p.v)), mx=Math.max.apply(null,a.map(p=>p.v));
+  if(o.zeroBase){ mn=Math.min(mn,0); mx=Math.max(mx,0); }
+  const span=(mx-mn)||1;
+  mn-=o.zeroBase?span*0.05:span*0.18; mx+=span*0.14;
+  const y=v=>B-(v-mn)/(mx-mn)*(B-T);
+  const n=a.length, gw=(R-L)/n, bw=Math.min(24,gw*0.58);
+  let g='<svg class="'+(MOB?'mob':'')+'" viewBox="0 0 480 '+H+'">';
+  for(let i2=0;i2<=4;i2++){
+    const vv=mn+(mx-mn)*i2/4, yy=y(vv);
+    g+='<line x1="'+L+'" y1="'+yy+'" x2="'+R+'" y2="'+yy+'" class="gline"/>';
+    g+='<text class="axis" x="'+(L-6)+'" y="'+(yy+4)+'" text-anchor="end" font-size="'+(MOB?19:12)+'">'+fmt(vv,0)+'</text>';
+  }
+  if(o.zeroBase){ const zy=y(0); g+='<line x1="'+L+'" y1="'+zy+'" x2="'+R+'" y2="'+zy+'" stroke="#D2CFC7" stroke-width="1.4"/>'; }
+  a.forEach((p,i)=>{
+    const cx=L+gw*i+gw/2, y0=o.zeroBase?y(0):B, y1=y(p.v);
+    const col=(o.zeroBase&&p.v<0)?'#B5303F':'#0E5F58';
+    g+='<rect x="'+(cx-bw/2)+'" y="'+Math.min(y0,y1)+'" width="'+bw+'" height="'+Math.max(Math.abs(y0-y1),1.5)+'" fill="'+col+'" opacity=".82" rx="1.5"/>';
+    if(i===a.length-1)
+      g+='<text class="axis" x="'+Math.min(cx,R-8)+'" y="'+(y1-7)+'" text-anchor="middle" font-weight="700" fill="#14181D" font-size="'+(MOB?21:12)+'">'+(o.zeroBase&&p.v>=0?'+':'')+fmt(p.v,0)+'</text>';
+    if(i%3===0||i===a.length-1)
+      g+='<text class="axis" x="'+cx+'" y="'+(B+20)+'" text-anchor="middle" font-size="'+(MOB?18:11)+'">'+p.t.slice(2,7).replace('-','.')+'</text>';
+  });
+  g+='</svg>';
+  el.innerHTML=g;
+}
+
+function f9DrawRates(){
+  const el=$('fig9d'), lg=$('lg9d');
+  const kr=f9Pts('한국기준금리'), us=f9Pts('미국기준금리상단');
+  if(!kr.length||!us.length){ el.innerHTML='<div class="err">기준금리 데이터 대기 (주간 수집)</div>'; lg.innerHTML=''; return; }
+  // 최근 13개월 그리드 (월말 기준 계단 평가 — 변동점 시계열)
+  const months=[]; const now=new Date();
+  for(let i=12;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    months.push(d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)); }
+  const stepVal=(pts,ym)=>{ let v=null; pts.forEach(p=>{ if(p.t.slice(0,7)<=ym) v=p.v; }); return v; };
+  let M=[],K=[],U=[];
+  months.forEach(m=>{ const kv=stepVal(kr,m), uv=stepVal(us,m);
+    if(kv!==null&&uv!==null){ M.push(m); K.push(kv); U.push(uv); } });
+  if(M.length<2){ el.innerHTML='<div class="err">표시 구간 부족 — 수집 누적 대기</div>'; lg.innerHTML=''; return; }
+  const W=980,H=302,L=64,R=946,T=42,B=238;
+  const vmax=Math.max.apply(null,U.concat(K))+0.8;
+  const vmin=Math.max(0,Math.min.apply(null,U.concat(K))-0.8);
+  const y=v=>B-(v-vmin)/(vmax-vmin)*(B-T);
+  const x=i=>L+i*(R-L)/(M.length-1);
+  let g='<svg class="'+(MOB?'mob':'')+'" viewBox="0 0 '+W+' '+H+'">';
+  for(let i2=0;i2<=4;i2++){ const vv=vmin+(vmax-vmin)*i2/4;
+    g+='<line x1="'+L+'" y1="'+y(vv)+'" x2="'+R+'" y2="'+y(vv)+'" class="gline"/>';
+    g+='<text class="axis" x="'+(L-7)+'" y="'+(y(vv)+4)+'" text-anchor="end">'+vv.toFixed(2)+'</text>'; }
+  // 금리차 양방향 화살표: 첫 달 · 변동 달 · 마지막 달 (최대 4개)
+  const idxs=[0];
+  for(let i=1;i<M.length;i++) if(K[i]!==K[i-1]||U[i]!==U[i-1]) idxs.push(i);
+  if(idxs[idxs.length-1]!==M.length-1) idxs.push(M.length-1);
+  const show=idxs.length>4?[idxs[0]].concat(idxs.slice(-3)):idxs;
+  show.forEach(i=>{
+    const yt=Math.min(y(U[i]),y(K[i]))+9, yb=Math.max(y(U[i]),y(K[i]))-9;
+    if(yb-yt<18) return;
+    const xx=x(i), gap=K[i]-U[i];
+    g+='<line x1="'+xx+'" y1="'+yt+'" x2="'+xx+'" y2="'+yb+'" stroke="#9AA0A6" stroke-width="1.4" stroke-dasharray="3 3"/>';
+    g+='<polygon points="'+xx+','+(yt-4)+' '+(xx-4)+','+(yt+4)+' '+(xx+4)+','+(yt+4)+'" fill="#9AA0A6"/>';
+    g+='<polygon points="'+xx+','+(yb+4)+' '+(xx-4)+','+(yb-4)+' '+(xx+4)+','+(yb-4)+'" fill="#9AA0A6"/>';
+    const right=x(i)>W*0.72;
+    g+='<text class="axis" x="'+(right?xx-8:xx+8)+'" y="'+((yt+yb)/2+4)+'" text-anchor="'+(right?'end':'start')+'" font-weight="700" fill="#4A554F">차 '+(gap>=0?'+':'')+gap.toFixed(2)+'%p</text>';
+  });
+  g+='<polyline points="'+U.map((v,i)=>x(i)+','+y(v)).join(' ')+'" fill="none" stroke="#16509B" stroke-width="2.6"/>';
+  g+='<polyline points="'+K.map((v,i)=>x(i)+','+y(v)).join(' ')+'" fill="none" stroke="#0E5F58" stroke-width="2.6"/>';
+  M.forEach((m,i)=>{
+    g+='<circle cx="'+x(i)+'" cy="'+y(U[i])+'" r="3.5" fill="#FFFFFF" stroke="#16509B" stroke-width="2"/>';
+    g+='<circle cx="'+x(i)+'" cy="'+y(K[i])+'" r="3.5" fill="#FFFFFF" stroke="#0E5F58" stroke-width="2"/>';
+    const lbl = MOB ? (i%2===0||i===M.length-1) : true;
+    if(lbl){
+      g+='<text class="axis" x="'+x(i)+'" y="'+(y(U[i])-9)+'" text-anchor="middle" fill="#16509B" font-weight="600" font-size="'+(MOB?19:11.5)+'">'+U[i].toFixed(2)+'</text>';
+      g+='<text class="axis" x="'+x(i)+'" y="'+(y(K[i])+19)+'" text-anchor="middle" fill="#0E5F58" font-weight="600" font-size="'+(MOB?19:11.5)+'">'+K[i].toFixed(2)+'</text>';
+    }
+    if(i%2===0||i===M.length-1){ const lastL=i===M.length-1;
+      g+='<text class="axis" x="'+(lastL?Math.min(x(i)+10,W-4):x(i))+'" y="'+(H-10)+'" text-anchor="'+(lastL?'end':'middle')+'">'+m.slice(2).replace('-','.')+'</text>'; }
+  });
+  g+='</svg>';
+  el.innerHTML=g;
+  const kL=K[K.length-1], uL=U[U.length-1];
+  lg.innerHTML='<span class="lg">'+swHtml('#0E5F58')+'한국 기준금리 <b>'+kL.toFixed(2)+'%</b></span>'+
+    '<span class="lg">'+swHtml('#16509B')+'미국 상단 <b>'+uL.toFixed(2)+'%</b></span>'+
+    '<span style="font-family:var(--mono);font-size:10px;color:var(--faint)">↕ 금리차(韓−美) '+(kL-uL>=0?'+':'')+(kL-uL).toFixed(2)+'%p · ECOS 722Y001 · FRED DFEDTARU · 변동점→월말 계단 평가</span>';
+}
+
+function f9Draw(){
+  if(!F9) return;
+  const a9=$('asof9');
+  if(a9){
+    const rv=f9Last('외환보유액'), ca=f9Last('경상수지');
+    a9.textContent=(rv?'보유액 '+rv.t.replace('-','.'):'')+(ca?' · 경상 '+ca.t.replace('-','.'):'')+
+      ' · 수집 '+String(F9.updated||'').slice(5,16);
+  }
+  const sig=f9Signals();
+  $('sig9').innerHTML=sig.map(s=>'<div><div class="sn">'+s.n+'</div><div class="sv">'+s.v+'</div>'+
+    '<span class="sj '+s.j+'">'+s.jl+'</span><div class="sd">'+s.d+'</div></div>').join('');
+  $('verdict9').innerHTML='<div class="verdict9">'+f9Verdict(sig)+'</div>';
+  f9DrawFx();
+  const rvL=f9Last('외환보유액'), caL=f9Last('경상수지');
+  $('lg9b').innerHTML='<span class="lg"><span class="sw sw-bar" style="background:#0E5F58"></span>외환보유액 (억$)'+
+    (rvL?' <b>'+fmt(rvL.v,0)+'</b>':'')+'</span><span style="font-family:var(--mono);font-size:10px;color:var(--faint)">ECOS 732Y001 합계 · 월별 12개월</span>';
+  f9BarChart('fig9b', f9Pts('외환보유액'), {zeroBase:false});
+  $('lg9c').innerHTML='<span class="lg"><span class="sw sw-bar" style="background:#0E5F58"></span>경상수지 (억$)'+
+    (caL?' <b>'+(caL.v>=0?'+':'')+fmt(caL.v,0)+'</b>':'')+'</span><span style="font-family:var(--mono);font-size:10px;color:var(--faint)">ECOS 301Y017 SA000 · 흑자=녹 · 적자=적</span>';
+  f9BarChart('fig9c', f9Pts('경상수지'), {zeroBase:true});
+  f9DrawRates();
+}
+
 function toggleStock(n){ stockOn[n]=!stockOn[n]; renderAll(); }
 function setAllStocks(on){ Object.keys(stockOn).forEach(n=>stockOn[n]=on); renderAll(); }
 async function loadTickerbar(force){
@@ -1566,6 +1799,7 @@ async function ensureDaily(silent, force){
     DATA.stocks.dailyStocks = j.dailyStocks || {};
     DAILY_LOADED = true;
     composeLede(); fitLede(); renderAll();
+    if(F9) f9Draw();   // FIG.09 환율×DXY 갱신
   }catch(e){
     if(!silent && isDaily()) $('fig1').innerHTML = '<div class="err">일별 데이터를 받지 못했습니다. 잠시 후 기간 버튼을 다시 눌러 주세요.</div>';
   }finally{ dailyLoading = false; }
@@ -1587,7 +1821,7 @@ async function refreshAll(){
     applyLatestBadge(); composeLede(); fitLede(); renderAll();
     await loadTickerbar(true);
     // 나머지는 이어서
-    await Promise.allSettled([ ensureDaily(true, true), loadDram(true), loadEvents(true), loadFig06(true), loadFig07(true), loadFig08(true) ]);
+    await Promise.allSettled([ ensureDaily(true, true), loadDram(true), loadEvents(true), loadFig06(true), loadFig07(true), loadFig08(true), loadFig09(true) ]);
     NEWS = null; if(TAB === 'news') loadNews(true);
     const t = new Date();
     const el = $('updatedText');
@@ -1615,6 +1849,7 @@ async function refreshAll(){
   loadFig06();
   loadFig07();
   loadFig08();
+  loadFig09();
   attachZoom('fig5');
   ensureDaily(true);           // 일별은 뒤에서 조용히 채움
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitLede);
