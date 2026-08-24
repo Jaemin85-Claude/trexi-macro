@@ -202,6 +202,22 @@ svg.mob .axis{font-size:27px}
 .row9>div{min-width:0}
 @media(max-width:720px){.sig9{grid-template-columns:repeat(2,1fr)}.row9{grid-template-columns:1fr}}
 
+/* ---------- FIG.10 AI 모델 ---------- */
+.grid10{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0 4px}
+.p10{background:var(--surface);border:1px solid var(--rule);padding:13px 15px 9px;min-width:0}
+.p10 h3{font-size:13px;margin-bottom:1px}
+.p10 .s10{font-family:var(--mono);font-size:10px;color:var(--faint);margin-bottom:9px}
+.p10.eff{border-left:3px solid var(--petrol)}
+.h10{display:grid;grid-template-columns:118px 1fr 60px;gap:7px;align-items:center;margin:4.5px 0;font-size:12px}
+.h10 .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;line-height:1.15}
+.h10 .nm em{font-style:normal;font-size:9.5px;color:var(--faint);display:block}
+.h10 .tr{background:var(--surface-2);border-radius:3px;height:14px;min-width:0}
+.h10 .fl{height:14px;border-radius:3px;min-width:3px}
+.h10 .vv{font-family:var(--mono);font-weight:700;font-size:11.5px;white-space:nowrap}
+.t10wait{border:1px dashed var(--rule);background:var(--surface);padding:12px 15px;margin-top:12px;
+  font-size:var(--fs-sm);color:var(--muted);line-height:1.6}
+@media(max-width:720px){.grid10{grid-template-columns:1fr}.h10{grid-template-columns:104px 1fr 56px}}
+
 /* ---------- 푸터 ---------- */
 footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--rule);font-size:var(--fs-xs);color:var(--faint);line-height:1.9}
 
@@ -391,6 +407,23 @@ section:nth-of-type(3){animation-delay:.22s} section:nth-of-type(4){animation-de
   <div class="legend" id="lg9d"></div>
   <div id="fig9d"></div>
   <div class="readout" id="ro9" style="white-space:normal">신호는 최신 실측값으로 자동 판정되며, 값이 없으면 "확인중"으로 표시됩니다 (임의 수치 없음).</div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="figrow"><span class="fig">FIG. 10 · AI 모델</span><span class="asof" id="asof10"></span></div>
+    <h2>지능·속도·비용 — 그리고 1달러의 지능</h2>
+  </div>
+  <div class="desc">지능 지수 상위 모델 기준. <b>효율 = 지능 지수 ÷ 블렌디드 가격($/1M 토큰)</b> — "1달러로 사는 지능"의 상승 속도가 토큰 단가 디플레이션, 즉 FIG.06 capex 논리의 반대편 저울입니다. 데이터: <a href="https://artificialanalysis.ai" target="_blank" rel="noopener" style="color:var(--petrol)">Artificial Analysis</a>.</div>
+  <div class="grid10">
+    <div class="p10"><h3>① 지능 지수 상위</h3><div class="s10">AA Intelligence Index · 높을수록 우수</div><div id="fig10a"><div class="err">불러오는 중…</div></div></div>
+    <div class="p10"><h3>② 출력 속도 상위</h3><div class="s10">중위 출력 토큰/초 · 높을수록 빠름</div><div id="fig10b"></div></div>
+    <div class="p10"><h3>③ 블렌디드 가격 (지능 상위 12 중)</h3><div class="s10">$/1M 토큰 (입력:출력 3:1) · 낮을수록 저렴</div><div id="fig10c"></div></div>
+    <div class="p10 eff"><h3>④ 효율 — 1달러로 사는 지능</h3><div class="s10">지능 지수 ÷ 가격 · 높을수록 가성비</div><div id="fig10d"></div></div>
+  </div>
+  <div class="legend" id="lg10t"></div>
+  <div id="fig10t"></div>
+  <div class="readout" id="ro10" style="white-space:normal">지능 지수가 없는 모델은 제외 · 값이 없는 항목은 "—" 표시 (임의 수치 없음) · 이력은 매주 월요일 자동 스냅샷.</div>
 </section>
 
 <section id="evtSection">
@@ -1648,6 +1681,83 @@ function f9Draw(){
   f9DrawRates();
 }
 
+// ---------- FIG.10 AI 모델 지표 ----------
+let F10=null;
+async function loadFig10(force){
+  try{
+    const r = await fetch(API.replace('type=all','type=fig10') + (force?'&nocache=1':''));
+    F10 = await r.json();
+    f10Draw();
+  }catch(e){
+    const b=$('fig10a');
+    if(b) b.innerHTML='<div class="err">AI 모델 데이터를 받지 못했습니다. 새로 받기로 재시도해 주세요.</div>';
+  }
+}
+function f10Col(c){
+  const s=String(c||'').toLowerCase();
+  if(s.indexOf('openai')>-1) return '#404A46';
+  if(s.indexOf('anthropic')>-1) return '#B07A5A';
+  if(s.indexOf('google')>-1) return '#1F7E54';
+  if(s.indexOf('xai')>-1||s.indexOf('spacex')>-1) return '#6B4DC0';
+  if(s.indexOf('deepseek')>-1) return '#2764AE';
+  if(s.indexOf('nvidia')>-1) return '#5B8E2E';
+  if(s.indexOf('meta')>-1) return '#2E6FB5';
+  if(s.indexOf('moonshot')>-1||s.indexOf('zhipu')>-1||s.indexOf('z.ai')>-1||s.indexOf('alibaba')>-1||s.indexOf('qwen')>-1||s.indexOf('minimax')>-1) return '#B5303F';
+  return '#7A857F';
+}
+function f10Bars(elId, arr, val, fv, fixedColor){
+  const el=$(elId);
+  if(!el) return;
+  if(!arr.length){ el.innerHTML='<div class="err">표시할 모델 없음</div>'; return; }
+  const mx=Math.max.apply(null, arr.map(val));
+  el.innerHTML=arr.map(function(m){
+    const v=val(m), w=Math.max(v/mx*100, 2);
+    const col=fixedColor||f10Col(m.c);
+    return '<div class="h10"><span class="nm">'+m.n+'<em>'+(m.c||'')+'</em></span>'+
+      '<span class="tr"><span class="fl" style="width:'+w.toFixed(1)+'%;background:'+col+'"></span></span>'+
+      '<span class="vv">'+fv(v)+'</span></div>';
+  }).join('');
+}
+function f10Draw(){
+  if(!F10) return;
+  const a10=$('asof10');
+  if(a10) a10.textContent='수집 '+String(F10.updated||'').slice(5,16)+' · Artificial Analysis';
+  const ms=(F10.models||[]).filter(function(m){ return isFinite(m.idx); });
+  if(!ms.length){
+    $('fig10a').innerHTML='<div class="err">'+((F10.notes&&F10.notes[0])||'데이터 없음')+'</div>';
+    return;
+  }
+  const byIdx=ms.slice(0,8);
+  const bySpd=ms.filter(function(m){return m.spd;}).slice().sort(function(a,b){return b.spd-a.spd;}).slice(0,8);
+  const topSet=ms.slice(0,12).filter(function(m){return m.prc;});
+  const byPrc=topSet.slice().sort(function(a,b){return a.prc-b.prc;}).slice(0,8);
+  const byEff=ms.filter(function(m){return m.eff;}).slice().sort(function(a,b){return b.eff-a.eff;}).slice(0,8);
+  f10Bars('fig10a', byIdx, function(m){return m.idx;}, function(v){return v.toFixed(1);});
+  f10Bars('fig10b', bySpd, function(m){return m.spd;}, function(v){return fmt(v,0);});
+  f10Bars('fig10c', byPrc, function(m){return m.prc;}, function(v){return '$'+v.toFixed(2);});
+  f10Bars('fig10d', byEff, function(m){return m.eff;}, function(v){return v.toFixed(1);}, 'var(--petrol)');
+  f10Trend();
+}
+function f10Trend(){
+  const el=$('fig10t'), lg=$('lg10t');
+  if(!el||!lg) return;
+  const h=(F10.history||[]).filter(function(x){ return x.bestEff||x.frontMinPrc; });
+  if(h.length<2){
+    lg.innerHTML='';
+    el.innerHTML='<div class="t10wait"><b>효율 개선 추이 (준비 중)</b> — 매주 월요일 스냅샷이 쌓이면 "최고 효율"과 "최상위권 최저 가격"의 추이 선이 여기에 자동 표시됩니다. 현재 누적: '+h.length+'주 (2주부터 표시).</div>';
+    return;
+  }
+  const keys=h.map(function(x){return x.d;});
+  const eff=h.map(function(x){return {k:x.d, v:x.bestEff};}).filter(function(p){return p.v;});
+  const prc=h.map(function(x){return {k:x.d, v:x.frontMinPrc};}).filter(function(p){return p.v;});
+  const last=h[h.length-1];
+  lg.innerHTML='<span class="lg">'+swHtml('#0E5F58')+'최고 효율 (지수/$) <b>'+(last.bestEff!==null?last.bestEff:'—')+'</b></span>'+
+    (prc.length?'<span class="lg">'+swHtml('#A87A12',true)+'최상위권 최저가 ($/1M) <b>'+(last.frontMinPrc!==null?'$'+last.frontMinPrc:'—')+'</b> <em>우축</em></span>':'')+
+    '<span style="font-family:var(--mono);font-size:10px;color:var(--faint)">주간 스냅샷 · 최상위권 = 당시 최고 지수의 85% 이상 모델</span>';
+  drawLineChart('fig10t',[{data:eff,color:'#0E5F58'}],keys,
+    {rSeries:prc.length?[{data:prc,color:'#A87A12',dash:'6 5',op:.9}]:[], rAxis:prc.length>0, h:300});
+}
+
 function toggleStock(n){ stockOn[n]=!stockOn[n]; renderAll(); }
 function setAllStocks(on){ Object.keys(stockOn).forEach(n=>stockOn[n]=on); renderAll(); }
 async function loadTickerbar(force){
@@ -1830,7 +1940,7 @@ async function refreshAll(){
     applyLatestBadge(); composeLede(); fitLede(); renderAll();
     await loadTickerbar(true);
     // 나머지는 이어서
-    await Promise.allSettled([ ensureDaily(true, true), loadDram(true), loadEvents(true), loadFig06(true), loadFig07(true), loadFig08(true), loadFig09(true) ]);
+    await Promise.allSettled([ ensureDaily(true, true), loadDram(true), loadEvents(true), loadFig06(true), loadFig07(true), loadFig08(true), loadFig09(true), loadFig10(true) ]);
     NEWS = null; if(TAB === 'news') loadNews(true);
     const t = new Date();
     const el = $('updatedText');
@@ -1859,6 +1969,7 @@ async function refreshAll(){
   loadFig07();
   loadFig08();
   loadFig09();
+  loadFig10();
   attachZoom('fig5');
   ensureDaily(true);           // 일별은 뒤에서 조용히 채움
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitLede);
