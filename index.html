@@ -208,15 +208,15 @@ svg.mob .axis{font-size:27px}
 .p10 h3{font-size:13px;margin-bottom:1px}
 .p10 .s10{font-family:var(--mono);font-size:10px;color:var(--faint);margin-bottom:9px}
 .p10.eff{border-left:3px solid var(--petrol)}
-.h10{display:grid;grid-template-columns:118px 1fr 60px;gap:7px;align-items:center;margin:4.5px 0;font-size:12px}
-.h10 .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;line-height:1.15}
+.h10{display:grid;grid-template-columns:150px 1fr 60px;gap:7px;align-items:center;margin:5px 0;font-size:11.5px}
+.h10 .nm{text-align:right;line-height:1.2;overflow-wrap:anywhere}
 .h10 .nm em{font-style:normal;font-size:9.5px;color:var(--faint);display:block}
 .h10 .tr{background:var(--surface-2);border-radius:3px;height:14px;min-width:0;overflow:hidden;display:block}
 .h10 .fl{height:14px;border-radius:3px;min-width:3px;display:block}
 .h10 .vv{font-family:var(--mono);font-weight:700;font-size:11.5px;white-space:nowrap}
 .t10wait{border:1px dashed var(--rule);background:var(--surface);padding:12px 15px;margin-top:12px;
   font-size:var(--fs-sm);color:var(--muted);line-height:1.6}
-@media(max-width:720px){.grid10{grid-template-columns:1fr}.h10{grid-template-columns:104px 1fr 56px}}
+@media(max-width:720px){.grid10{grid-template-columns:1fr}.h10{grid-template-columns:132px 1fr 54px}}
 
 /* ---------- 푸터 ---------- */
 footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--rule);font-size:var(--fs-xs);color:var(--faint);line-height:1.9}
@@ -1705,6 +1705,16 @@ function f10Col(c){
   if(s.indexOf('moonshot')>-1||s.indexOf('zhipu')>-1||s.indexOf('z.ai')>-1||s.indexOf('alibaba')>-1||s.indexOf('qwen')>-1||s.indexOf('minimax')>-1) return '#B5303F';
   return '#7A857F';
 }
+function f10Cap(arr, n){   // 같은 제작사 최대 2개 — 초과분은 건너뛰고 다른 제작사로 채움
+  const cnt={}, out=[];
+  for(let i=0;i<arr.length&&out.length<n;i++){
+    const c=arr[i].c||'?';
+    if((cnt[c]||0)>=2) continue;
+    cnt[c]=(cnt[c]||0)+1;
+    out.push(arr[i]);
+  }
+  return out;
+}
 function f10Bars(elId, arr, val, fv, fixedColor){
   const el=$(elId);
   if(!el) return;
@@ -1727,11 +1737,11 @@ function f10Draw(){
     $('fig10a').innerHTML='<div class="err">'+((F10.notes&&F10.notes[0])||'데이터 없음')+'</div>';
     return;
   }
-  const byIdx=ms.slice(0,8);
-  const bySpd=ms.filter(function(m){return m.spd;}).slice().sort(function(a,b){return b.spd-a.spd;}).slice(0,8);
-  const topSet=ms.slice(0,12).filter(function(m){return m.prc;});
-  const byPrc=topSet.slice().sort(function(a,b){return a.prc-b.prc;}).slice(0,8);
-  const byEff=ms.filter(function(m){return m.eff;}).slice().sort(function(a,b){return b.eff-a.eff;}).slice(0,8);
+  const byIdx=f10Cap(ms, 8);
+  const bySpd=f10Cap(ms.filter(function(m){return m.spd;}).slice().sort(function(a,b){return b.spd-a.spd;}), 8);
+  const topSet=f10Cap(ms, 12).filter(function(m){return m.prc;});
+  const byPrc=f10Cap(topSet.slice().sort(function(a,b){return a.prc-b.prc;}), 8);
+  const byEff=f10Cap(ms.filter(function(m){return m.eff;}).slice().sort(function(a,b){return b.eff-a.eff;}), 8);
   f10Bars('fig10a', byIdx, function(m){return m.idx;}, function(v){return v.toFixed(1);});
   f10Bars('fig10b', bySpd, function(m){return m.spd;}, function(v){return fmt(v,0);});
   f10Bars('fig10c', byPrc, function(m){return m.prc;}, function(v){return '$'+v.toFixed(2);});
